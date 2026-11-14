@@ -32,7 +32,7 @@ jobs:
         shell: pwsh
         run: |
           $env:KX_AUDIO_EVIDENCE = "$pwd/evidence/baseline"
-          & .qa-audio-tools/node_modules/electron/dist/electron.exe qa/native-audio/probe.cjs 2>&1 | Tee-Object evidence/baseline/chromium.log
+          & (Resolve-Path ".qa-audio-tools/node_modules/electron/dist/electron.exe") qa/native-audio/probe.cjs 2>&1 | Tee-Object evidence/baseline/chromium.log
           exit $LASTEXITCODE
       - name: Start existing audio services only and record changed environment
         shell: powershell
@@ -41,7 +41,7 @@ jobs:
         shell: pwsh
         run: |
           $env:KX_AUDIO_EVIDENCE = "$pwd/evidence/services-started"
-          & .qa-audio-tools/node_modules/electron/dist/electron.exe qa/native-audio/probe.cjs 2>&1 | Tee-Object evidence/services-started/chromium.log
+          & (Resolve-Path ".qa-audio-tools/node_modules/electron/dist/electron.exe") qa/native-audio/probe.cjs 2>&1 | Tee-Object evidence/services-started/chromium.log
           exit $LASTEXITCODE
       - name: Retain exact errors and non-silent audio evidence
         if: always()
