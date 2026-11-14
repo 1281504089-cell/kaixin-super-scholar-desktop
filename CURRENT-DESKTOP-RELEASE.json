@@ -1,31 +1,31 @@
 {
   "formatVersion": 1,
   "repository": "1281504089-cell/kaixin-k12-tutor",
-  "tag": "student-20261114-library",
-  "release_id": 445094312,
-  "release_url": "https://github.com/1281504089-cell/kaixin-k12-tutor/releases/tag/student-20261114-library",
-  "release_repository_commit": "9f693e4cf7ed3cd61d9b9107a981165ce7808965",
-  "combined_source_commit": "8e31f68080a9c746f409c1191caf167b421a939e",
-  "learning_source_commit": "8e31f68080a9c746f409c1191caf167b421a939e",
-  "backend_source_commit": "8e31f68080a9c746f409c1191caf167b421a939e",
-  "baseline_source_commit": "c0eaa65d5324908ef8afc29adee9adc364b4dff1",
-  "frontend_build_id": "p8K24TQozA0rUZ3AmVmii",
+  "tag": "student-20261114-materials",
+  "release_id": 445169286,
+  "release_url": "https://github.com/1281504089-cell/kaixin-k12-tutor/releases/tag/student-20261114-materials",
+  "release_repository_commit": "3cb235c4919947cafded345c03705579f40c66ae",
+  "combined_source_commit": "842d6654666e20e606f31245cc20730807562ad8",
+  "learning_source_commit": "842d6654666e20e606f31245cc20730807562ad8",
+  "backend_source_commit": "842d6654666e20e606f31245cc20730807562ad8",
+  "baseline_source_commit": "8e31f68080a9c746f409c1191caf167b421a939e",
+  "frontend_build_id": "hGEsbZ_PARcFRtdLpswdB",
   "launcher_build": "20261114-unified",
-  "builtAt": 1794640103915,
-  "core_archive": "kaixin-core-20261114-library.tar.gz",
-  "core_sha256": "becd75e830f9e632bcf898a7d62dfdd76dccc6281eac82fffde15f225c93334f",
-  "core_bytes": 44865262,
+  "builtAt": 1794647878145,
+  "core_archive": "kaixin-core-20261114-materials.tar.gz",
+  "core_sha256": "d0498a88ec722d36be81d87d84fec08f1986fec6747780b6bb2185619b4c615d",
+  "core_bytes": 26739567,
   "platforms": {
     "windows-x64": {
       "native_run": {
-        "run_id": 43569764765,
-        "workflow_commit": "3294627cfbdcc14fafb1303540811fce0e46a9f1"
+        "run_id": 43580085769,
+        "workflow_commit": "5e4f7ee7d08de4af3eddec72f2b7bbfc68950b18"
       },
-      "native_job_url": "https://github.com/1281504089-cell/kaixin-k12-tutor/actions/runs/43569764765/job/132371382314",
-      "new_install_runtime": "1.7.1-kaixin-20261114-library-windows-x64-20261112",
+      "native_job_url": "https://github.com/1281504089-cell/kaixin-k12-tutor/actions/runs/43580085769/job/132402739863",
+      "new_install_runtime": "1.7.1-kaixin-20261114-materials-windows-x64-20261112",
       "stable_manifest": "runtime-windows-x64.json",
-      "stable_manifest_sha256": "23d189c5ecaa82173c5e458682ab3e4a28b19ca0cffd61fdc1233270b7705dfe",
-      "stable_runtime": "1.7.1-kaixin-20261114-library-windows-x64-universal",
+      "stable_manifest_sha256": "54925c24b323fd9afd23f93f50f5e0108179bc66e2ec7e41f71c7d913ef01cc6",
+      "stable_runtime": "1.7.1-kaixin-20261114-materials-windows-x64-universal",
       "complete_installation_files": [
         {
           "file": "Kaixin-Super-Scholar-Windows-v1.7.1-Runtime.001",
@@ -49,8 +49,8 @@
         },
         {
           "file": "Kaixin-Super-Scholar-Windows-v1.7.1-Setup.exe",
-          "bytes": 204684320,
-          "sha256": "2233c290881641b40a890fc1be9d994dbd6d7801b48a1ea5067cf9b489e4d8fa"
+          "bytes": 186554432,
+          "sha256": "b2442e7be599c9bb9b19e45a8d10b0f3d0b50b65bb6fe042e1ca625d96d1910c"
         }
       ],
       "migration_file": {
@@ -152,55 +152,77 @@
         "concurrent_library_uploads_saved": true,
         "scanned_pdf_retrievable": true,
         "sources": 3,
-        "interactive_page_ready_while_indexing_seconds": 7.297,
-        "temporary_raw_seconds": 2.39,
+        "interactive_page_ready_while_indexing_seconds": 8.812,
+        "temporary_raw_seconds": 2.562,
         "library_raw_seconds": [
-          0.203,
-          2.688
+          0.25,
+          3.328
         ],
-        "background_and_retrieval_seconds": 24.562,
-        "health_max_seconds": 0.469,
+        "background_and_retrieval_seconds": 27.829,
+        "health_max_seconds": 0.515,
         "real_api_key_used": false,
         "cloud_models_used": false
       },
       "library_bulk_upload": {
         "multiple": true,
-        "saved_files": 2,
+        "saved_files": 21,
         "library_retention": true,
         "originals_byte_identical": true,
-        "original_preview_opened": true
+        "original_preview_opened": true,
+        "held_real_chunk": true,
+        "chat_and_settings_navigation": true,
+        "appended_while_active": true,
+        "completed_in_chat": true,
+        "document_not_reloaded": true,
+        "draft_preserved": true,
+        "picker_reference_byte_identical": true,
+        "no_duplicate_upload_or_new_chat": true,
+        "html_safe_preview": true,
+        "source_toggle": true,
+        "device_speech": {
+          "attachmentScriptBlocked": true,
+          "available": true,
+          "localVoices": 0,
+          "networkBlocked": true,
+          "noDesktopIPC": true,
+          "noNode": true,
+          "parentBlocked": true,
+          "observedStatus": "设备朗读未能播放，请检查系统声音后重试。"
+        },
+        "native_math_display": true,
+        "real_model_calls": 0
       }
     },
     "macos-x64": {
       "native_run": {
-        "run_id": 43569764765,
-        "workflow_commit": "3294627cfbdcc14fafb1303540811fce0e46a9f1"
+        "run_id": 43580085769,
+        "workflow_commit": "5e4f7ee7d08de4af3eddec72f2b7bbfc68950b18"
       },
-      "native_job_url": "https://github.com/1281504089-cell/kaixin-k12-tutor/actions/runs/43569764765/job/132371382458",
-      "new_install_runtime": "1.7.1-kaixin-20261114-library-macos-x64-20261112",
+      "native_job_url": "https://github.com/1281504089-cell/kaixin-k12-tutor/actions/runs/43580085769/job/132402739928",
+      "new_install_runtime": "1.7.1-kaixin-20261114-materials-macos-x64-20261112",
       "stable_manifest": "runtime-macos-x64.json",
-      "stable_manifest_sha256": "f56c88314e70ce146d64ecd615bbde80a8a8638566e36e85aef2b137004d6b54",
-      "stable_runtime": "1.7.1-kaixin-20261114-library-macos-x64-universal",
+      "stable_manifest_sha256": "762d5800637fa9e6f0a761c81cdae029ea0a8481c30ca831ad5dde6b947e33c8",
+      "stable_runtime": "1.7.1-kaixin-20261114-materials-macos-x64-universal",
       "complete_installation_files": [
         {
-          "file": "Kaixin-Super-Scholar-MacOS-Intel-v1.7.1-20261114-library-part.002.dmgpart",
+          "file": "Kaixin-Super-Scholar-MacOS-Intel-v1.7.1-20261114-materials-part.002.dmgpart",
           "bytes": 1992295135,
-          "sha256": "62e171543ea9ceffc4c0ae757e3e279639ee0c38af42dc729870c34c02d16082"
+          "sha256": "41e5d0b31c8d6c8901de8f7644c551d2e35d2d72aad39155479a898c124ff352"
         },
         {
-          "file": "Kaixin-Super-Scholar-MacOS-Intel-v1.7.1-20261114-library-part.003.dmgpart",
+          "file": "Kaixin-Super-Scholar-MacOS-Intel-v1.7.1-20261114-materials-part.003.dmgpart",
           "bytes": 1992295135,
-          "sha256": "586512a8a432f990e488017ff878363033ba8a2c41440c54be3b8baa8afe531a"
+          "sha256": "a1bce213308e55fef7c1cbddfb4039a74e9e5a0bab0a0eed7663afdbfa43e249"
         },
         {
-          "file": "Kaixin-Super-Scholar-MacOS-Intel-v1.7.1-20261114-library-part.004.dmgpart",
-          "bytes": 1201452831,
-          "sha256": "8799e26271ecaaa2740467311775889a2efc97a79c416703863472453ee5e647"
+          "file": "Kaixin-Super-Scholar-MacOS-Intel-v1.7.1-20261114-materials-part.004.dmgpart",
+          "bytes": 1183298712,
+          "sha256": "88a45cdd3eb29053048a046ce66374460eb22763b07c591f3395ffd8b0124c61"
         },
         {
-          "file": "Kaixin-Super-Scholar-MacOS-Intel-v1.7.1-20261114-library-part.dmg",
-          "bytes": 1992733868,
-          "sha256": "99212a86af8ec3f8e3906877250d777064fac519029832907b7a43124de2a604"
+          "file": "Kaixin-Super-Scholar-MacOS-Intel-v1.7.1-20261114-materials-part.dmg",
+          "bytes": 1992733096,
+          "sha256": "cf26f960db4867b6fa6ae61eb6057b87fe0dbc238c40eed448b3c0ec37b3dcc1"
         }
       ],
       "migration_file": {
@@ -302,55 +324,77 @@
         "concurrent_library_uploads_saved": true,
         "scanned_pdf_retrievable": true,
         "sources": 3,
-        "interactive_page_ready_while_indexing_seconds": 9.313,
-        "temporary_raw_seconds": 1.915,
+        "interactive_page_ready_while_indexing_seconds": 14.149,
+        "temporary_raw_seconds": 2.968,
         "library_raw_seconds": [
-          0.172,
-          2.133
+          0.327,
+          3.187
         ],
-        "background_and_retrieval_seconds": 27.316,
-        "health_max_seconds": 0.244,
+        "background_and_retrieval_seconds": 40.776,
+        "health_max_seconds": 0.129,
         "real_api_key_used": false,
         "cloud_models_used": false
       },
       "library_bulk_upload": {
         "multiple": true,
-        "saved_files": 2,
+        "saved_files": 21,
         "library_retention": true,
         "originals_byte_identical": true,
-        "original_preview_opened": true
+        "original_preview_opened": true,
+        "held_real_chunk": true,
+        "chat_and_settings_navigation": true,
+        "appended_while_active": true,
+        "completed_in_chat": true,
+        "document_not_reloaded": true,
+        "draft_preserved": true,
+        "picker_reference_byte_identical": true,
+        "no_duplicate_upload_or_new_chat": true,
+        "html_safe_preview": true,
+        "source_toggle": true,
+        "device_speech": {
+          "attachmentScriptBlocked": true,
+          "available": true,
+          "localVoices": 0,
+          "networkBlocked": true,
+          "noDesktopIPC": true,
+          "noNode": true,
+          "parentBlocked": true,
+          "observedStatus": "正在朗读 · 设备合成声音"
+        },
+        "native_math_display": true,
+        "real_model_calls": 0
       }
     },
     "macos-arm64": {
       "native_run": {
-        "run_id": 43569764765,
-        "workflow_commit": "3294627cfbdcc14fafb1303540811fce0e46a9f1"
+        "run_id": 43580085769,
+        "workflow_commit": "5e4f7ee7d08de4af3eddec72f2b7bbfc68950b18"
       },
-      "native_job_url": "https://github.com/1281504089-cell/kaixin-k12-tutor/actions/runs/43569764765/job/132371382574",
-      "new_install_runtime": "1.7.1-kaixin-20261114-library-macos-arm64-20261112",
+      "native_job_url": "https://github.com/1281504089-cell/kaixin-k12-tutor/actions/runs/43580085769/job/132402739707",
+      "new_install_runtime": "1.7.1-kaixin-20261114-materials-macos-arm64-20261112",
       "stable_manifest": "runtime-macos-arm64.json",
-      "stable_manifest_sha256": "cf5f041800f665425f866b9b4a9a25d7633aa9495a924299a9be349b0cc74ae8",
-      "stable_runtime": "1.7.1-kaixin-20261114-library-macos-arm64-universal",
+      "stable_manifest_sha256": "98fd3b5d26c265d2d3fdd5dbc57f0aa86a11916858dd5d3c19dff948aadc69cb",
+      "stable_runtime": "1.7.1-kaixin-20261114-materials-macos-arm64-universal",
       "complete_installation_files": [
         {
-          "file": "Kaixin-Super-Scholar-MacOS-Apple-Silicon-v1.7.1-20261114-library-part.002.dmgpart",
+          "file": "Kaixin-Super-Scholar-MacOS-Apple-Silicon-v1.7.1-20261114-materials-part.002.dmgpart",
           "bytes": 1992295135,
-          "sha256": "b334676879f648906270a47db741ac2f1556d9318ec91aef6f75150663b551c8"
+          "sha256": "7c5ef81b87294b82efaeefb4495d4d78f50b93f89fbcf1567c4a8e87acae990b"
         },
         {
-          "file": "Kaixin-Super-Scholar-MacOS-Apple-Silicon-v1.7.1-20261114-library-part.003.dmgpart",
+          "file": "Kaixin-Super-Scholar-MacOS-Apple-Silicon-v1.7.1-20261114-materials-part.003.dmgpart",
           "bytes": 1992295135,
-          "sha256": "c8fcc254334a3ca048b23d21a3b0975f9778d7d5484075ed4873a350bff5411c"
+          "sha256": "b0da11ffe2471bb2f4e7b6029caeb656450e6b3e18b068f9641c196d0b267aef"
         },
         {
-          "file": "Kaixin-Super-Scholar-MacOS-Apple-Silicon-v1.7.1-20261114-library-part.004.dmgpart",
-          "bytes": 1132460583,
-          "sha256": "1d9a29d2e8ccddb7685744c8a568b38472d6cfd5d718bb07f038e4e68a859830"
+          "file": "Kaixin-Super-Scholar-MacOS-Apple-Silicon-v1.7.1-20261114-materials-part.004.dmgpart",
+          "bytes": 1114166569,
+          "sha256": "1b6b7dda027618648739752f2e769bdb7dae7f39823fc4bbf6448fb6739116c8"
         },
         {
-          "file": "Kaixin-Super-Scholar-MacOS-Apple-Silicon-v1.7.1-20261114-library-part.dmg",
-          "bytes": 1992729233,
-          "sha256": "41097158ee8b2cd968ec694f3a303748cecd4fe86b054b4fcb365d7dc5d5da07"
+          "file": "Kaixin-Super-Scholar-MacOS-Apple-Silicon-v1.7.1-20261114-materials-part.dmg",
+          "bytes": 1992728286,
+          "sha256": "9f3c308717174a937b5579a1d52b70b78ac47d5a4b4d634de2ceb548621dc2ca"
         }
       ],
       "migration_file": {
@@ -452,42 +496,64 @@
         "concurrent_library_uploads_saved": true,
         "scanned_pdf_retrievable": true,
         "sources": 3,
-        "interactive_page_ready_while_indexing_seconds": 4.247,
-        "temporary_raw_seconds": 0.988,
+        "interactive_page_ready_while_indexing_seconds": 7.394,
+        "temporary_raw_seconds": 1.586,
         "library_raw_seconds": [
-          0.081,
-          0.96
+          0.193,
+          1.759
         ],
-        "background_and_retrieval_seconds": 14.518,
-        "health_max_seconds": 0.084,
+        "background_and_retrieval_seconds": 25.303,
+        "health_max_seconds": 0.198,
         "real_api_key_used": false,
         "cloud_models_used": false
       },
       "library_bulk_upload": {
         "multiple": true,
-        "saved_files": 2,
+        "saved_files": 21,
         "library_retention": true,
         "originals_byte_identical": true,
-        "original_preview_opened": true
+        "original_preview_opened": true,
+        "held_real_chunk": true,
+        "chat_and_settings_navigation": true,
+        "appended_while_active": true,
+        "completed_in_chat": true,
+        "document_not_reloaded": true,
+        "draft_preserved": true,
+        "picker_reference_byte_identical": true,
+        "no_duplicate_upload_or_new_chat": true,
+        "html_safe_preview": true,
+        "source_toggle": true,
+        "device_speech": {
+          "attachmentScriptBlocked": true,
+          "available": true,
+          "localVoices": 0,
+          "networkBlocked": true,
+          "noDesktopIPC": true,
+          "noNode": true,
+          "parentBlocked": true,
+          "observedStatus": "朗读完成"
+        },
+        "native_math_display": true,
+        "real_model_calls": 0
       }
     }
   },
-  "source_test_receipt": "VERIFICATION-LIBRARY-20261114.json",
+  "source_test_receipt": "VERIFICATION-MATERIALS-20261114.json",
   "post_publication_verification": {
-    "signature_verified_manifests": 21,
+    "signature_verified_manifests": 24,
     "native_platform": "darwin",
     "native_arch": "x64",
     "transport": "production Chromium update session",
-    "previous_review_full_runtime_gets_small_update": true,
-    "downloaded_core_commit": "8e31f68080a9c746f409c1191caf167b421a939e",
-    "downloaded_sha256": "becd75e830f9e632bcf898a7d62dfdd76dccc6281eac82fffde15f225c93334f",
-    "selected_native_base": "1.7.1-kaixin-20261114-review-macos-x64-universal",
+    "previous_library_full_runtime_gets_small_update": true,
+    "downloaded_core_commit": "842d6654666e20e606f31245cc20730807562ad8",
+    "downloaded_sha256": "d0498a88ec722d36be81d87d84fec08f1986fec6747780b6bb2185619b4c615d",
+    "selected_native_base": "1.7.1-kaixin-20261114-library-macos-x64-universal",
     "current_full_install_does_not_downgrade": true,
     "earliest_base_gets_automatic_native_bridge": true,
     "real_user_profile_modified": false
   },
-  "publication_receipt_url": "https://github.com/1281504089-cell/kaixin-k12-tutor/releases/download/student-20261114-library/PUBLICATION-RECEIPT.json",
-  "publication_run": 43572343795,
+  "publication_receipt_url": "https://github.com/1281504089-cell/kaixin-k12-tutor/releases/download/student-20261114-materials/PUBLICATION-RECEIPT.json",
+  "publication_run": 43595489561,
   "usb_delivery": {
     "completed": true,
     "verified_payload_files": 9,
@@ -500,12 +566,12 @@
   "physical_student_devices_all_tested": false,
   "paid_model_semantic_quality_tested": false,
   "third_party_model_recovery_claimed": false,
-  "backend_payload_unchanged_from": "c0eaa65d5324908ef8afc29adee9adc364b4dff1",
-  "source_web_tests_passed": 137,
-  "targeted_ui_tests_passed": 15,
-  "backend_api_test_evidence_reused": {
-    "tag": "student-20261114-review",
-    "tests_passed": 75,
-    "backend_unchanged": true
-  }
+  "source_web_tests_passed": 228,
+  "source_api_tests_passed": 96,
+  "ordinary_core_download_reduction_percent": 40.4,
+  "omitted_development_figure_files": 68,
+  "source_files_sha256": "ccf67077fc401725ca72379c3addc7e6add0c44afe91bf7bdc00fcdc92fb256a",
+  "source_patch_sha256": "a737ad1efdeb43cb46a3e10b7614c357fd9cb8c12d61978bdcca81cfe4645f33",
+  "voice_playback": "device speech synthesis; system voices required; no three-platform speaker recording",
+  "background_upload_scope": "internal page navigation only; no process-exit or refresh resume"
 }

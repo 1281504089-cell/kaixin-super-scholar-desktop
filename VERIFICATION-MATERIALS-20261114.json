@@ -405,7 +405,7 @@
     "actual_archive_public_readback_verified": true
   },
   "three_native_jobs": "success",
-  "published": false,
+  "published": true,
   "real_keys_used": false,
   "real_learner_data_modified": false,
   "usb_modified": false,
@@ -578,5 +578,25 @@
     "full_files_public_digest_verified": 13,
     "physical_user_devices_tested": false,
     "windows_audio_output_success_observed": false
+  },
+  "publication": {
+    "run_id": 43595489561,
+    "release_id": 445169286,
+    "tag": "student-20261114-materials",
+    "repository_commit": "3cb235c4919947cafded345c03705579f40c66ae",
+    "receipt_sha256": "a55576b67d19b449f86b5842bd593b40877d62fe26ed48138fe3276ef1844a84"
+  },
+  "post_publication_readback": {
+    "signature_verified_manifests": 24,
+    "native_platform": "darwin",
+    "native_arch": "x64",
+    "transport": "production Chromium update session",
+    "previous_library_full_runtime_gets_small_update": true,
+    "downloaded_core_commit": "842d6654666e20e606f31245cc20730807562ad8",
+    "downloaded_sha256": "d0498a88ec722d36be81d87d84fec08f1986fec6747780b6bb2185619b4c615d",
+    "selected_native_base": "1.7.1-kaixin-20261114-library-macos-x64-universal",
+    "current_full_install_does_not_downgrade": true,
+    "earliest_base_gets_automatic_native_bridge": true,
+    "real_user_profile_modified": false
   }
 }

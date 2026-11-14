@@ -1,12 +1,12 @@
 {
-  "signature_verified_manifests": 21,
+  "signature_verified_manifests": 24,
   "native_platform": "darwin",
   "native_arch": "x64",
   "transport": "production Chromium update session",
-  "previous_review_full_runtime_gets_small_update": true,
-  "downloaded_core_commit": "8e31f68080a9c746f409c1191caf167b421a939e",
-  "downloaded_sha256": "becd75e830f9e632bcf898a7d62dfdd76dccc6281eac82fffde15f225c93334f",
-  "selected_native_base": "1.7.1-kaixin-20261114-review-macos-x64-universal",
+  "previous_library_full_runtime_gets_small_update": true,
+  "downloaded_core_commit": "842d6654666e20e606f31245cc20730807562ad8",
+  "downloaded_sha256": "d0498a88ec722d36be81d87d84fec08f1986fec6747780b6bb2185619b4c615d",
+  "selected_native_base": "1.7.1-kaixin-20261114-library-macos-x64-universal",
   "current_full_install_does_not_downgrade": true,
   "earliest_base_gets_automatic_native_bridge": true,
   "real_user_profile_modified": false
