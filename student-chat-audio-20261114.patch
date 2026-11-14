@@ -1,0 +1,1074 @@
+diff --git a/deeptutor/agents/_shared/tool_composition.py b/deeptutor/agents/_shared/tool_composition.py
+index 8366e1a..7a9baf6 100644
+--- a/deeptutor/agents/_shared/tool_composition.py
++++ b/deeptutor/agents/_shared/tool_composition.py
+@@ -268,6 +268,7 @@ def compose_enabled_tools(
+             composed.append(tool_name)
+     composed.extend(str(name) for name in capability_owned if str(name).strip())
+     for always_on in (
++        "speechgen",
+         "math_diagram",
+         "study_mistakes",
+         "study_navigate",
+diff --git a/deeptutor/agents/_shared/tool_runtime.py b/deeptutor/agents/_shared/tool_runtime.py
+index a9377b7..0f28033 100644
+--- a/deeptutor/agents/_shared/tool_runtime.py
++++ b/deeptutor/agents/_shared/tool_runtime.py
+@@ -12,6 +12,7 @@ from deeptutor.services.cli_apps.models import TOOL_PREFIX as CLI_APP_TOOL_PREFI
+ logger = logging.getLogger(__name__)
+ 
+ GENERATION_TOOL_SERVICES: dict[str, str] = {
++    "speechgen": "tts",
+     "imagegen": "imagegen",
+     "videogen": "videogen",
+ }
+diff --git a/deeptutor/agents/loop/pipeline.py b/deeptutor/agents/loop/pipeline.py
+index 244471f..8f8593c 100644
+--- a/deeptutor/agents/loop/pipeline.py
++++ b/deeptutor/agents/loop/pipeline.py
+@@ -1551,7 +1551,7 @@ class AgenticLoopPipeline:
+         # (``execute_tool_call``), so a long-running tool no longer has to pose
+         # as a retrieval to stream its progress. What it still needs from here
+         # is the call_kind the frontend renders it by.
+-        if tool_name in ("imagegen", "videogen"):
++        if tool_name in ("speechgen", "imagegen", "videogen"):
+             return derive_trace_metadata(
+                 tool_meta,
+                 label=self._t("labels.tool_call", default="Tool call"),
+diff --git a/deeptutor/i18n/metadata_i18n.py b/deeptutor/i18n/metadata_i18n.py
+index 55316ef..04bb585 100644
+--- a/deeptutor/i18n/metadata_i18n.py
++++ b/deeptutor/i18n/metadata_i18n.py
+@@ -42,6 +42,10 @@ _CAPABILITY_DESCRIPTIONS: dict[str, dict[str, str]] = {
+ }
+ 
+ _TOOL_DESCRIPTIONS: dict[str, dict[str, str]] = {
++    "speechgen": {
++        "en": "Generate a speech file and show a playable audio card in chat.",
++        "zh": "生成语音文件，直接在聊天里显示可播放的音频。",
++    },
+     "brainstorm": {
+         "en": "Explore ideas broadly and organize them with rationale.",
+         "zh": "广泛发散想法，并按理由组织结果。",
+diff --git a/deeptutor/modules/manifests/core.json b/deeptutor/modules/manifests/core.json
+index a93f638..e8ec98e 100644
+--- a/deeptutor/modules/manifests/core.json
++++ b/deeptutor/modules/manifests/core.json
+@@ -26,6 +26,7 @@
+           "zotero_search",
+           "reason",
+           "geogebra_analysis",
++          "speechgen",
+           "imagegen",
+           "videogen"
+         ],
+@@ -164,6 +165,10 @@
+       "class_path": "deeptutor.tools.workspace:WorkspaceExportTool",
+       "order": 36
+     },
++    "speechgen": {
++      "class_path": "deeptutor.tools.media_gen_tool:SpeechgenTool",
++      "order": 37
++    },
+     "imagegen": {
+       "class_path": "deeptutor.tools.media_gen_tool:ImagegenTool",
+       "order": 38
+diff --git a/deeptutor/services/voice/__init__.py b/deeptutor/services/voice/__init__.py
+index 472214b..81ccd54 100644
+--- a/deeptutor/services/voice/__init__.py
++++ b/deeptutor/services/voice/__init__.py
+@@ -8,6 +8,7 @@ Settings catalog UI.
+ 
+ from __future__ import annotations
+ 
++import re
+ from typing import Any
+ 
+ from deeptutor.services.voice.adapters import get_stt_adapter, get_tts_adapter
+@@ -54,12 +55,17 @@ async def synthesize_speech(
+         config.response_format = response_format
+     speak_math = _math_speak_from_settings() if math_speak is None else math_speak
+     prepared = (
+-        strip_markdown_for_speech(text, max_chars=config.max_input_chars, math_speak=speak_math)
++        strip_markdown_for_speech(text, math_speak=speak_math)
+         if strip_markdown
+         else text.strip()
+     )
+     if not prepared:
+         raise VoiceProviderError("Nothing to speak after cleaning the text.")
++    if len(prepared) > config.max_input_chars:
++        raise VoiceProviderError(f"所选内容超过当前语音服务的 {config.max_input_chars} 字符上限，请分段朗读；本次没有截断或生成音频。")
++    if config.adapter == "edge" and not voice and config.voice in {None, "", "zh-CN-XiaoxiaoNeural"}:
++        if re.search(r"[A-Za-z]", prepared) and not re.search(r"[\u4e00-\u9fff]", prepared):
++            config.voice = "en-US-AriaNeural"
+     adapter = get_tts_adapter(config.adapter)
+     return await synthesize_with_timeout(adapter, prepared, config)
+ 
+diff --git a/deeptutor/tools/builtin/__init__.py b/deeptutor/tools/builtin/__init__.py
+index b9f9a6a..6fe8df8 100644
+--- a/deeptutor/tools/builtin/__init__.py
++++ b/deeptutor/tools/builtin/__init__.py
+@@ -2330,6 +2330,7 @@ USER_TOGGLEABLE_TOOL_NAMES: tuple[str, ...] = (
+ # context-gated built-ins (gate: the learner has a topic) rather than part of
+ # any capability.
+ CONFIGURABLE_BUILTIN_TOOL_NAMES: tuple[str, ...] = (
++    "speechgen",
+     "study_mistakes",
+     "study_navigate",
+     "study_tasks",
+diff --git a/deeptutor/tools/media_gen_tool.py b/deeptutor/tools/media_gen_tool.py
+index 0154abe..0e48c97 100644
+--- a/deeptutor/tools/media_gen_tool.py
++++ b/deeptutor/tools/media_gen_tool.py
+@@ -18,6 +18,7 @@ Mounting & gating (set by the chat pipeline, not here):
+ from __future__ import annotations
+ 
+ import logging
++import math
+ from pathlib import Path
+ import re
+ from typing import TYPE_CHECKING, Any
+@@ -39,6 +40,14 @@ _EXT_BY_CONTENT_TYPE = {
+     "video/mp4": "mp4",
+     "video/webm": "webm",
+     "video/quicktime": "mov",
++    "audio/mpeg": "mp3",
++    "audio/mp3": "mp3",
++    "audio/wav": "wav",
++    "audio/x-wav": "wav",
++    "audio/ogg": "ogg",
++    "audio/flac": "flac",
++    "audio/aac": "aac",
++    "audio/mp4": "m4a",
+ }
+ 
+ 
+@@ -132,6 +141,84 @@ def _artifact_result(
+     )
+ 
+ 
++class SpeechgenTool(BaseTool):
++    """Generate and present a durable, directly playable speech attachment."""
++
++    def get_prompt_hints(self, language: str = "en"):
++        return load_prompt_hints(self.name, language=language)
++
++    def get_definition(self) -> ToolDefinition:
++        return ToolDefinition(
++            name="speechgen",
++            description=(
++                "Generate a real audio file from the exact text to be spoken, using the "
++                "configured text-to-speech service. Presents a playable audio card in chat "
++                "automatically. For listening exercises, read-aloud and audio-file requests "
++                "use this tool, not exec, say, ffmpeg or HTML. Only claim success after it succeeds."
++            ),
++            parameters=[
++                ToolParameter(name="text", type="string", description="Complete spoken script, without HTML, Markdown, stage directions or synthesis commands."),
++                ToolParameter(name="language", type="string", description="Language/accent of the spoken text, not the conversation UI.", required=False, enum=["en-US", "en-GB", "zh-CN"]),
++                ToolParameter(name="speed", type="number", description="Optional speaking speed; 0.8 for slower practice, 1 for normal. Omit to keep the configured speed.", required=False, minimum=0.5, maximum=2),
++                ToolParameter(name="title", type="string", description="Short title for the audio card.", required=False),
++            ],
++        )
++
++    async def execute(self, **kwargs: Any) -> ToolResult:
++        from deeptutor.services.config.provider_runtime import resolve_tts_runtime_config
++        from deeptutor.services.voice.audio import _parse_pcm_content_type, _pcm16_to_wav
++        from deeptutor.services.voice.base import VoiceProviderError, synthesize_with_timeout
++        from deeptutor.services.voice import get_tts_adapter
++        from deeptutor.tools.workspace import WorkspacePresentTool
++
++        text = kwargs.get("text")
++        if not isinstance(text, str) or not text.strip():
++            return ToolResult(content="speechgen requires a non-empty spoken text.", success=False)
++        text = text.strip()
++        language = kwargs.get("language") or ("zh-CN" if re.search(r"[\u4e00-\u9fff]", text) else "en-US")
++        if language not in {"en-US", "en-GB", "zh-CN"}:
++            return ToolResult(content="Choose speech language en-US, en-GB or zh-CN.", success=False)
++        speed = kwargs.get("speed")
++        if speed is not None and (isinstance(speed, bool) or not isinstance(speed, (int, float)) or not math.isfinite(speed) or not 0.5 <= speed <= 2):
++            return ToolResult(content="Speech speed must be a number between 0.5 and 2.", success=False)
++        try:
++            config = resolve_tts_runtime_config()
++            if len(text) > config.max_input_chars:
++                return ToolResult(content=f"The spoken script exceeds this voice service's {config.max_input_chars}-character limit. Split it into complete shorter audio clips; no text was truncated or generated.", success=False)
++            config.language = language
++            if speed is not None:
++                config.speed = speed
++            if config.adapter == "edge":
++                # Match the exercise language without changing the user's saved voice.
++                if not (config.voice or "").startswith(language + "-"):
++                    config.voice = {"en-US": "en-US-AriaNeural", "en-GB": "en-GB-SoniaNeural", "zh-CN": "zh-CN-XiaoxiaoNeural"}[language]
++                config.response_format = "mp3"
++            audio, content_type = await synthesize_with_timeout(get_tts_adapter(config.adapter), text, config)
++        except ValueError:
++            return ToolResult(content="语音服务尚未正确配置，请在设置的语音服务中选择可用的声音后重试。", success=False)
++        except VoiceProviderError as exc:
++            logger.warning("speechgen failed: %s", type(exc).__name__)
++            return ToolResult(content=exc.public_message or "音频生成未完成，请检查网络和语音服务设置后重试。不要把文字、HTML 或空文件当作音频。", success=False)
++        pcm_info = _parse_pcm_content_type(content_type)
++        if pcm_info:
++            audio = _pcm16_to_wav(audio, sample_rate=pcm_info[0], channels=pcm_info[1])
++            content_type = "audio/wav"
++        mime = (content_type or "").split(";")[0].strip().lower()
++        if not audio or len(audio) > 25 * 1024 * 1024 or not mime.startswith("audio/") or mime not in _EXT_BY_CONTENT_TYPE:
++            return ToolResult(content="语音服务没有返回可播放的音频文件，请重试或更换语音服务。", success=False)
++        workspace_id = str(kwargs.get("_workspace_id") or "")
++        run_dir, workspace_id = _run_dir(kwargs.get("_workspace_dir"), "speechgen", workspace_id=workspace_id)
++        artifacts = _write_media(run_dir, [(audio, mime)], stem="speech", default_ext="mp3", workspace_id=workspace_id)
++        title = str(kwargs.get("title") or "音频").strip()[:120]
++        result = await WorkspacePresentTool().execute(
++            items=[{"path": item.relative_path, "title": title} for item in artifacts],
++            _workspace_id=workspace_id,
++        )
++        if result.success:
++            result.content = "Audio generated and presented as a playable card in chat. " + result.content
++        return result
++
++
+ class ImagegenTool(BaseTool):
+     """Generate images from a text prompt via the configured imagegen model."""
+ 
+diff --git a/deeptutor/tools/prompting/hints/en/speechgen.yaml b/deeptutor/tools/prompting/hints/en/speechgen.yaml
+new file mode 100644
+index 0000000..a8c2586
+--- /dev/null
++++ b/deeptutor/tools/prompting/hints/en/speechgen.yaml
+@@ -0,0 +1,5 @@
++short_description: "Generate a real speech file and present a playable audio card in chat"
++when_to_use: "Use speechgen directly for listening exercises, pronunciation, read-aloud and requests for an audio file."
++input_format: "text is the complete spoken script; language chooses the script's language/accent (en-US/en-GB/zh-CN), not the UI language; speed 0.8 supports slower practice."
++guideline: "Success automatically presents audio in chat. Do not use HTML, exec, say, ffmpeg or system-plugin probes for speech synthesis. Report failure honestly without inventing audio or retrying shell commands. Split overlong scripts at complete boundaries; do not omit or truncate text. Preserve teacher rules and source permissions."
++phase: "synthesis"
+diff --git a/deeptutor/tools/prompting/hints/zh/speechgen.yaml b/deeptutor/tools/prompting/hints/zh/speechgen.yaml
+new file mode 100644
+index 0000000..e4577e1
+--- /dev/null
++++ b/deeptutor/tools/prompting/hints/zh/speechgen.yaml
+@@ -0,0 +1,5 @@
++short_description: "生成真实语音文件并直接显示聊天音频播放器"
++when_to_use: "用户要求听力、朗读、发音示范、给我一个音频或可播放文件时，直接使用 speechgen。"
++input_format: "text 传完整朗读原文；language 选原文语言及口音（en-US/en-GB/zh-CN），不是界面语言；speed 可设 0.8 慢速练习。"
++guideline: "音频成功后自动出现在聊天里，用户点播放即可，不需 HTML。不得为合成音频运行 exec、say、ffmpeg 或探测系统插件。失败要如实说明，不伪造音频，不反复试探命令。超长文本分完整短片段，不省略、截断原文。保留老师规则与资料权限。"
++phase: "synthesis"
+diff --git a/tests/capabilities/test_subagent_capability.py b/tests/capabilities/test_subagent_capability.py
+index 3776348..8f592d6 100644
+--- a/tests/capabilities/test_subagent_capability.py
++++ b/tests/capabilities/test_subagent_capability.py
+@@ -126,6 +126,7 @@ def test_exclusive_compose_drops_builtins_but_keeps_coexisting_rag() -> None:
+         exclusive=True,
+     )
+     assert set(composed) == {
++        "student_textbooks",
+         "workspace_list",
+         "workspace_read",
+         "workspace_search",
+@@ -150,6 +151,7 @@ def test_exclusive_compose_pure_subagent_mounts_no_rag() -> None:
+         exclusive=True,
+     )
+     assert set(composed) == {
++        "student_textbooks",
+         "workspace_list",
+         "workspace_read",
+         "workspace_search",
+diff --git a/tests/services/test_chat_speech.py b/tests/services/test_chat_speech.py
+new file mode 100644
+index 0000000..a37a4dc
+--- /dev/null
++++ b/tests/services/test_chat_speech.py
+@@ -0,0 +1,117 @@
++"""Speech artifacts preserve full text, provider settings and workspace ownership."""
++from pathlib import Path
++from unittest.mock import AsyncMock
++import pytest
++from deeptutor.services.voice.config import TTSConfig
++from deeptutor.services.voice.base import VoiceProviderError
++from deeptutor.tools.media_gen_tool import SpeechgenTool
++
++@pytest.fixture
++def speech(monkeypatch):
++    config = TTSConfig(model="edge-tts", adapter="edge", voice="zh-CN-XiaoxiaoNeural")
++    synth = AsyncMock(return_value=(b"ID3-test-speech", "audio/mpeg"))
++    monkeypatch.setattr("deeptutor.services.config.provider_runtime.resolve_tts_runtime_config", lambda: config)
++    monkeypatch.setattr("deeptutor.services.voice.base.synthesize_with_timeout", synth)
++    return config, synth
++
++@pytest.mark.asyncio
++async def test_speech_is_presented_and_persisted_as_audio(monkeypatch, tmp_path, speech):
++    from deeptutor.services.workspace import get_content_workspace_service
++    from deeptutor.services.session.artifact_attachments import artifact_attachments
++    from deeptutor.core.stream import StreamEvent, StreamEventType
++    monkeypatch.setenv("DEEPTUTOR_WORKSPACE_ROOT", str(tmp_path))
++    service = get_content_workspace_service()
++    runtime = service.create_runtime_context(capability="chat", session_id="speech-chat", turn_id="speech-turn")
++    result = await SpeechgenTool().execute(text="Ben went to the park. He wasn't tired.", language="en-US", speed=0.8, title="Listening practice", _workspace_id=runtime.workspace_id, _workspace_dir=str(Path(runtime.output_dir)/"media"))
++    assert result.success, result.content
++    config, synth = speech
++    assert synth.await_args.args[1] == "Ben went to the park. He wasn't tired."
++    assert config.voice == "en-US-AriaNeural" and config.speed == 0.8
++    item, = result.metadata["workspace_items"]
++    assert item["mime_type"] == "audio/mpeg" and item["url"].startswith("/files/workspace-items/")
++    snapshot, published = service.resolve_published_item(runtime.workspace_id, item["workspace_item_id"])
++    assert snapshot.read_bytes() == b"ID3-test-speech"
++    assert published.title == "Listening practice"
++    assert str(tmp_path) not in result.content
++    event = StreamEvent(type=StreamEventType.SOURCES, metadata={"sources": result.sources})
++    attachment, = artifact_attachments(event)
++    assert attachment["mime_type"] == "audio/mpeg" and attachment["generated"] is True
++    assert attachment["workspace_item_id"] == item["workspace_item_id"]
++
++@pytest.mark.asyncio
++@pytest.mark.parametrize("kwargs", [{"text":""}, {"text":"hello","speed":True}, {"text":"hello","speed":float("nan")}, {"text":"hello","speed":0.1}, {"text":"hello","language":"invalid"}])
++async def test_invalid_script_does_not_call_provider(speech, kwargs):
++    result = await SpeechgenTool().execute(**kwargs)
++    assert not result.success
++    speech[1].assert_not_awaited()
++
++@pytest.mark.asyncio
++async def test_long_script_is_not_silently_cut(speech):
++    speech[0].max_input_chars = 8
++    result = await SpeechgenTool().execute(text="Complete script")
++    assert not result.success and "no text was truncated" in result.content
++    speech[1].assert_not_awaited()
++
++@pytest.mark.asyncio
++async def test_failure_does_not_disclose_provider_secrets_or_fake_audio(speech):
++    speech[1].side_effect = VoiceProviderError("secret-token and internal provider body")
++    result = await SpeechgenTool().execute(text="Hello")
++    assert not result.success and not result.sources and not result.metadata
++    assert "secret-token" not in result.content
++
++@pytest.mark.asyncio
++@pytest.mark.parametrize("payload", [(b"", "audio/mpeg"), (b"<html>not audio</html>","text/html")])
++async def test_empty_or_non_audio_is_not_presented(speech, payload):
++    speech[1].return_value = payload
++    result = await SpeechgenTool().execute(text="Hello")
++    assert not result.success and not result.sources
++
++@pytest.mark.asyncio
++async def test_configured_paid_provider_voice_is_kept(monkeypatch, tmp_path, speech):
++    monkeypatch.setenv("DEEPTUTOR_WORKSPACE_ROOT", str(tmp_path))
++    config, synth = speech
++    config.adapter, config.voice = "openai_compat", "saved-voice"
++    result = await SpeechgenTool().execute(text="Hello", language="en-GB")
++    assert result.success and synth.await_args.args[2].voice == "saved-voice"
++
++
++def test_speech_registry_and_partner_deny_remain_enforced():
++    from deeptutor.tools.builtin_specs import BUILTIN_TOOL_SPEC_BY_NAME
++    from deeptutor.agents._shared.tool_composition import ToolMountFlags, compose_enabled_tools
++    class Registry:
++        def get_enabled(self, _requested): return []
++    kwargs = dict(registry=Registry(), requested_tools=[], optional_whitelist=[], mount_flags=ToolMountFlags())
++    assert isinstance(BUILTIN_TOOL_SPEC_BY_NAME["speechgen"].create(), SpeechgenTool)
++    assert "speechgen" in compose_enabled_tools(**kwargs)
++    assert "speechgen" not in compose_enabled_tools(**kwargs, builtin_whitelist=set())
++
++
++@pytest.mark.asyncio
++async def test_pcm_audio_is_wrapped_without_an_external_encoder(monkeypatch, tmp_path, speech):
++    import io, wave
++    monkeypatch.setenv("DEEPTUTOR_WORKSPACE_ROOT", str(tmp_path))
++    speech[1].return_value = (b"\x01\x00" * 240, "audio/pcm;rate=24000;channels=1")
++    result = await SpeechgenTool().execute(text="Hello")
++    assert result.success
++    item, = result.metadata["workspace_items"]
++    from deeptutor.services.workspace import get_content_workspace_service
++    snapshot, _ = get_content_workspace_service().resolve_published_item(item["workspace_id"], item["workspace_item_id"])
++    with wave.open(io.BytesIO(snapshot.read_bytes()), "rb") as wav:
++        assert wav.getframerate() == 24000 and wav.getnchannels() == 1 and wav.getnframes() == 240
++    assert item["mime_type"] == "audio/x-wav" or item["mime_type"] == "audio/wav"
++
++
++def test_speech_hints_direct_the_model_to_a_real_file():
++    for language in ("zh", "en"):
++        hints = SpeechgenTool().get_prompt_hints(language)
++        assert hints.phase == "synthesis"
++        assert "HTML" in hints.guideline and "ffmpeg" in hints.guideline
++
++
++def test_no_configured_tts_means_no_speech_tool(monkeypatch):
++    from deeptutor.agents._shared.tool_runtime import drop_unconfigured_generation_tools
++    from deeptutor.services.config.model_catalog import get_model_catalog_service
++    service = get_model_catalog_service()
++    monkeypatch.setattr(service, "load", lambda: {})
++    monkeypatch.setattr(service, "get_active_model", lambda *args: None)
++    assert drop_unconfigured_generation_tools(["speechgen", "workspace_present"]) == ["workspace_present"]
+diff --git a/tests/services/test_edge_voice.py b/tests/services/test_edge_voice.py
+index 8363288..410eac8 100644
+--- a/tests/services/test_edge_voice.py
++++ b/tests/services/test_edge_voice.py
+@@ -76,3 +76,22 @@ def test_edge_rate_bounds() -> None:
+     assert edge_rate(0.8) == "-20%"
+     with pytest.raises(VoiceProviderError):
+         edge_rate(3)
++
++
++@pytest.mark.asyncio
++async def test_default_voice_reads_english_in_english(fake_edge) -> None:
++    await synthesize_speech("Ben bought rice noodles.", catalog=catalog(), math_speak=False)
++    assert fake_edge[0]["voice"] == "en-US-AriaNeural"
++
++@pytest.mark.asyncio
++async def test_explicit_voice_choice_is_preserved(fake_edge) -> None:
++    await synthesize_speech("Hello", catalog=catalog(), voice="zh-CN-XiaoxiaoNeural", math_speak=False)
++    assert fake_edge[0]["voice"] == "zh-CN-XiaoxiaoNeural"
++
++@pytest.mark.asyncio
++async def test_read_aloud_limit_never_silently_truncates(fake_edge, monkeypatch) -> None:
++    from deeptutor.services.voice.config import TTSConfig
++    monkeypatch.setattr("deeptutor.services.config.provider_runtime.resolve_tts_runtime_config", lambda **_: TTSConfig(model="edge-tts", adapter="edge", max_input_chars=8))
++    with pytest.raises(VoiceProviderError, match="没有截断"):
++        await synthesize_speech("Read this complete sentence.", math_speak=False)
++    assert fake_edge == []
+diff --git a/web/components/chat/AudioPlayer.tsx b/web/components/chat/AudioPlayer.tsx
+new file mode 100644
+index 0000000..d93d15e
+--- /dev/null
++++ b/web/components/chat/AudioPlayer.tsx
+@@ -0,0 +1,24 @@
++"use client";
++
++import { useRef, useState } from "react";
++import { useTranslation } from "react-i18next";
++
++/** Play a saved audio file without synthesis, scripts or a document preview. */
++export default function AudioPlayer({ url, filename }: { url: string; filename: string }) {
++  const { t } = useTranslation();
++  const player = useRef<HTMLAudioElement>(null);
++  const [failed, setFailed] = useState(false);
++  return (
++    <div className="w-full min-w-0 space-y-2">
++      <audio ref={player} src={url} controls preload="metadata" aria-label={filename}
++        className="block w-full min-w-0" onError={() => setFailed(true)} onCanPlay={() => setFailed(false)} />
++      {failed ? (
++        <div role="alert" className="flex flex-wrap items-center gap-2 text-xs text-[var(--muted-foreground)]">
++          <span>{t("Failed to load audio.")}</span>
++          <button type="button" className="underline" onClick={() => { setFailed(false); player.current?.load(); }}>{t("Retry")}</button>
++          <a href={url} download={filename} className="underline">{t("Download")}</a>
++        </div>
++      ) : null}
++    </div>
++  );
++}
+diff --git a/web/components/chat/preview/FilePreviewDrawer.tsx b/web/components/chat/preview/FilePreviewDrawer.tsx
+index 1edaa1b..d3d03d2 100644
+--- a/web/components/chat/preview/FilePreviewDrawer.tsx
++++ b/web/components/chat/preview/FilePreviewDrawer.tsx
+@@ -1,6 +1,7 @@
+ "use client";
+ 
+ import { readingCollectionRoute } from "@/lib/learning-routes";
++import AudioPlayer from "@/components/chat/AudioPlayer";
+ 
+ import { memo, useCallback, useEffect, useRef, useState } from "react";
+ import dynamic from "next/dynamic";
+@@ -405,6 +406,8 @@ const PreviewBody = memo(function PreviewBody({
+       return <ImagePreview url={previewUrl} filename={filename} />;
+     case "video":
+       return <VideoPreview url={previewUrl} filename={filename} />;
++    case "audio":
++      return <div className="flex h-full items-center p-4"><AudioPlayer url={previewUrl} filename={filename} /></div>;
+     case "svg":
+       return <SvgPreview url={previewUrl} filename={filename} />;
+     case "markdown":
+diff --git a/web/components/chat/preview/previewerFor.ts b/web/components/chat/preview/previewerFor.ts
+index 28a073e..b11eb94 100644
+--- a/web/components/chat/preview/previewerFor.ts
++++ b/web/components/chat/preview/previewerFor.ts
+@@ -14,6 +14,7 @@ export type PreviewKind =
+   | "pdf"
+   | "image"
+   | "video"
++  | "audio"
+   | "svg"
+   | "markdown"
+   | "html"
+@@ -82,6 +83,7 @@ const RASTER_IMAGE_EXTS = new Set([
+   ".avif",
+ ]);
+ const VIDEO_EXTS = new Set([".mp4", ".webm", ".mov", ".m4v", ".ogv"]);
++const AUDIO_EXTS = new Set([".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac", ".opus"]);
+ 
+ /** Heuristic: does *source* refer to an image we can render via <img>? */
+ function isImage(source: FilePreviewSource, ext: string): boolean {
+@@ -103,6 +105,7 @@ export function previewKindFor(source: FilePreviewSource): PreviewKind {
+   if (ext === ".svg" || mime === "image/svg+xml") return "svg";
+   if (isImage(source, ext)) return "image";
+   if (VIDEO_EXTS.has(ext) || mime.startsWith("video/")) return "video";
++  if (AUDIO_EXTS.has(ext) || mime.startsWith("audio/")) return "audio";
+   if (MARKDOWN_EXTS.has(ext) || mime === "text/markdown") return "markdown";
+   if ([".html", ".htm"].includes(ext) || mime.split(";")[0].trim().toLowerCase() === "text/html") return "html";
+   if (
+diff --git a/web/components/common/RichInlineMarkdown.tsx b/web/components/common/RichInlineMarkdown.tsx
+index 2350f90..b0b792e 100644
+--- a/web/components/common/RichInlineMarkdown.tsx
++++ b/web/components/common/RichInlineMarkdown.tsx
+@@ -1,6 +1,7 @@
+ "use client";
+ 
+ import "katex/dist/katex.min.css";
++import "katex/contrib/mhchem";
+ import React, { useEffect, useState } from "react";
+ import ReactMarkdown from "react-markdown";
+ import remarkGfm from "remark-gfm";
+diff --git a/web/components/common/RichMarkdownRenderer.tsx b/web/components/common/RichMarkdownRenderer.tsx
+index 4e6b0b6..42acd77 100644
+--- a/web/components/common/RichMarkdownRenderer.tsx
++++ b/web/components/common/RichMarkdownRenderer.tsx
+@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
+ import remarkGfm from "remark-gfm";
+ import { useTranslation } from "react-i18next";
+ import "katex/dist/katex.min.css";
++import "katex/contrib/mhchem";
+ import {
+   convertFlowFenceToMermaid,
+   convertSequenceFenceToMermaid,
+diff --git a/web/components/reading/workspace/ReadingCompanion.tsx b/web/components/reading/workspace/ReadingCompanion.tsx
+index aa50d75..5256ccc 100644
+--- a/web/components/reading/workspace/ReadingCompanion.tsx
++++ b/web/components/reading/workspace/ReadingCompanion.tsx
+@@ -539,6 +539,7 @@ export function ReadingCompanion({
+         {selectedPassage && (
+           <SelectionActions
+             anchor={selectedPassage.anchor}
++            readAloudText={selectedPassage.text}
+             onAddToChat={() => { setConversationQuote(selectedPassage.text); clearPassage(); focusReadingComposer(); }}
+             onAddToNote={() => { setNoteExcerpt(selectedPassage.text); clearPassage(); }}
+             onAddToMistakes={state.sessionId && /^\d+$/.test(selectedPassage.messageId || "") ? savePassageAsMistake : undefined}
+diff --git a/web/features/chat/components/ChatWorkspace.tsx b/web/features/chat/components/ChatWorkspace.tsx
+index 28f60af..c918217 100644
+--- a/web/features/chat/components/ChatWorkspace.tsx
++++ b/web/features/chat/components/ChatWorkspace.tsx
+@@ -2841,6 +2841,7 @@ export default function ChatWorkspace() {
+                   {selectedPassage ? (
+                     <SelectionActions
+                       anchor={selectedPassage.anchor}
++                      readAloudText={selectedPassage.text}
+                       agents={agentOptions}
+                       onAddToChat={addSelectedPassageToChat}
+                       onAddToNote={addSelectedPassageToNote}
+diff --git a/web/features/chat/components/SelectionActions.tsx b/web/features/chat/components/SelectionActions.tsx
+index c60a6cf..d895a6c 100644
+--- a/web/features/chat/components/SelectionActions.tsx
++++ b/web/features/chat/components/SelectionActions.tsx
+@@ -18,6 +18,7 @@ import { BookMarked, ChevronDown, MessagesSquare, NotebookPen, TextQuote } from
+ import { useTranslation } from "react-i18next";
+ import ResponderList from "@/components/chat/home/ResponderList";
+ import { DITO, type SideChatResponder } from "@/lib/side-chat";
++import { PlayAudioButton } from "@/features/chat/messages/ChatMessageList";
+ 
+ export interface SelectionAnchor {
+   left: number;
+@@ -54,6 +55,7 @@ export default function SelectionActions({
+   onAddToMistakes,
+   onAsk,
+   onDismiss,
++  readAloudText,
+ }: {
+   anchor: SelectionAnchor;
+   /** Connected agents (not partners) this account can talk to. */
+@@ -63,10 +65,11 @@ export default function SelectionActions({
+   onAddToMistakes?: () => void;
+   onAsk?: (responder: SideChatResponder) => void;
+   onDismiss: () => void;
++  readAloudText?: string;
+ }) {
+   const { t } = useTranslation();
+   const [menuOpen, setMenuOpen] = useState(false);
+-  const width = Math.min(onAsk ? BAR_WIDTH + (onAddToMistakes ? 94 : 0) : 310, window.innerWidth - EDGE * 2);
++  const width = Math.min((onAsk ? BAR_WIDTH + (onAddToMistakes ? 94 : 0) : 310) + (readAloudText ? 80 : 0), window.innerWidth - EDGE * 2);
+   const { left, top } = place(anchor, width);
+   const menuAbove = top + BAR_HEIGHT + MENU_MAX_HEIGHT > window.innerHeight - EDGE;
+ 
+@@ -105,6 +108,7 @@ export default function SelectionActions({
+           <TextQuote size={14} strokeWidth={1.8} aria-hidden="true" />
+           {t("Add to chat")}
+         </button>
++        {readAloudText ? <PlayAudioButton key={readAloudText} content={readAloudText} autoPlayFresh={false} showLabel /> : null}
+         <span
+           aria-hidden="true"
+           className="my-2 w-px bg-[color-mix(in_srgb,var(--background)_22%,transparent)]"
+diff --git a/web/features/chat/messages/ChatMessageList.tsx b/web/features/chat/messages/ChatMessageList.tsx
+index 935ff4e..0f3002e 100644
+--- a/web/features/chat/messages/ChatMessageList.tsx
++++ b/web/features/chat/messages/ChatMessageList.tsx
+@@ -1,6 +1,7 @@
+ "use client";
+ 
+ import dynamic from "next/dynamic";
++import AudioPlayer from "@/components/chat/AudioPlayer";
+ import SaveMistakeButton from "@/components/student/SaveMistakeButton";
+ import MathFigures from "@/components/chat/home/MathFigures";
+ import PlainChoiceCards from "@/components/chat/home/PlainChoiceCards";
+@@ -662,6 +663,17 @@ export function GeneratedFileCards({
+           );
+         }
+ 
++        if (mime.startsWith("audio/") && mediaSrc) {
++          return (
++            <div key={key} className="w-full min-w-0 max-w-[min(520px,100%)] rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm">
++              <p className="mb-2 truncate text-sm font-medium">{a.title || humanizeFilename(filename)}</p>
++              <AudioPlayer url={mediaSrc} filename={filename} />
++              {caption ? <p className="mt-2 text-xs text-[var(--muted-foreground)]">{caption}</p> : null}
++              {supportsGeneratedOutputActions(a) ? <GeneratedOutputFileActions url={a.url || ""} /> : null}
++            </div>
++          );
++        }
++
+         if (mime.startsWith("video/") && mediaSrc) {
+           return (
+             <div
+@@ -1474,10 +1486,12 @@ export function PlayAudioButton({
+   content,
+   conversationKey,
+   autoPlayFresh,
++  showLabel = false,
+ }: {
+   content: string;
+   conversationKey?: string;
+   autoPlayFresh: boolean;
++  showLabel?: boolean;
+ }) {
+   const { t } = useTranslation();
+   const { autoplayEnabled } = useVoiceAutoplay(conversationKey);
+@@ -1547,6 +1561,7 @@ export function PlayAudioButton({
+       }
+       const blob = await resp.blob();
+       if (gen !== genRef.current) return;
++      if (!blob.size) throw new Error("Empty speech audio");
+       if (urlRef.current) {
+         URL.revokeObjectURL(urlRef.current);
+         urlRef.current = null;
+@@ -1573,7 +1588,7 @@ export function PlayAudioButton({
+         audio.pause();
+         return;
+       }
+-      setState("playing");
++      if (audioRef.current === audio) setState("playing");
+     } catch (err) {
+       if (gen !== genRef.current) return;
+       if (err instanceof Error && err.name === "AbortError") return;
+@@ -1609,16 +1624,17 @@ export function PlayAudioButton({
+   }, [cleanup]);
+ 
+   return (
+-    <div className="relative inline-flex">
++    <div className="relative inline-flex shrink-0">
+       <Tooltip
+-        label={state === "playing" ? t("Stop") : t("Play aloud")}
++        label={state !== "idle" ? t("Stop") : t("Play aloud")}
+         side="top"
+       >
+         <button
+           type="button"
+           onClick={handleClick}
+-          aria-label={state === "playing" ? t("Stop") : t("Play aloud")}
+-          className={`inline-flex items-center justify-center rounded-md p-1 transition-colors ${
++          aria-label={state !== "idle" ? t("Stop") : t("Play aloud")}
++          aria-busy={state === "loading"}
++          className={showLabel ? "inline-flex h-full items-center justify-center gap-1.5 whitespace-nowrap px-2.5 text-[12.5px] font-medium text-inherit transition-colors hover:bg-white/10" : `inline-flex items-center justify-center rounded-md p-1 transition-colors ${
+             state === "playing"
+               ? "text-[var(--primary)]"
+               : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]/50 hover:text-[var(--foreground)]"
+@@ -1631,6 +1647,7 @@ export function PlayAudioButton({
+           ) : (
+             <Volume2 size={15} strokeWidth={1.5} />
+           )}
++          {showLabel ? <span>{state !== "idle" ? t("Stop") : t("Play aloud")}</span> : null}
+         </button>
+       </Tooltip>
+     </div>
+diff --git a/web/features/chat/trace/TracePresentation.tsx b/web/features/chat/trace/TracePresentation.tsx
+index 3630faf..628cd85 100644
+--- a/web/features/chat/trace/TracePresentation.tsx
++++ b/web/features/chat/trace/TracePresentation.tsx
+@@ -178,6 +178,8 @@ function describeToolCall(
+   };
+ 
+   switch (toolName) {
++    case "speechgen":
++      return { verb: t("Generating"), chip: clip(str(a.title)) || null, mono: false };
+     case "student_textbooks":
+       return {
+         verb: a.page ? t("Reading source") : t("Searching knowledge"),
+diff --git a/web/features/notes/components/NoteMath.tsx b/web/features/notes/components/NoteMath.tsx
+index b178762..3a9527b 100644
+--- a/web/features/notes/components/NoteMath.tsx
++++ b/web/features/notes/components/NoteMath.tsx
+@@ -2,6 +2,7 @@
+ 
+ import { useMemo } from 'react'
+ import katex from 'katex'
++import 'katex/contrib/mhchem'
+ import 'katex/dist/katex.min.css'
+ 
+ // Math nodes already contain LaTeX, not Markdown. Keeping the mode explicit also
+diff --git a/web/lib/latex-commands.ts b/web/lib/latex-commands.ts
+index 7304eb1..0d8aa7a 100644
+--- a/web/lib/latex-commands.ts
++++ b/web/lib/latex-commands.ts
+@@ -160,7 +160,9 @@ const WEAK_TRIGGERS = new Set(
+  * starts here? A trigger only opens the search — the whole candidate fragment
+  * still has to be made of known commands (see `KATEX_COMMANDS`).
+  */
+-export function isMathTriggerCommand(name: string): boolean {
++export function isMathTriggerCommand(name: string, following = ""): boolean {
++  // mhchem's short commands need an argument; bare names may be code or paths.
++  if (name === "ce" || name === "pu") return /^\s*\{/.test(following);
+   return (
+     name.length >= 3 && KATEX_COMMANDS.has(name) && !WEAK_TRIGGERS.has(name)
+   );
+diff --git a/web/lib/latex-normalize.ts b/web/lib/latex-normalize.ts
+index 811bede..e45ebd4 100644
+--- a/web/lib/latex-normalize.ts
++++ b/web/lib/latex-normalize.ts
+@@ -150,7 +150,7 @@ function commandsAreKnown(fragment: string): boolean {
+ 
+ function hasTriggerCommand(fragment: string): boolean {
+   for (const match of fragment.matchAll(/\\([a-zA-Z]+)/g)) {
+-    if (isMathTriggerCommand(match[1])) return true;
++    if (isMathTriggerCommand(match[1], fragment.slice(match.index! + match[0].length))) return true;
+   }
+   return false;
+ }
+@@ -451,7 +451,7 @@ function wrapBareLatexInLine(line: string): string {
+     }
+ 
+     const cmd = /^\\([a-zA-Z]+)/.exec(line.slice(i));
+-    if (!cmd || !isMathTriggerCommand(cmd[1])) {
++    if (!cmd || !isMathTriggerCommand(cmd[1], line.slice(i + cmd[0].length))) {
+       const width = cmd ? cmd[0].length : 2;
+       out += line.slice(i, i + width);
+       i += width;
+@@ -650,7 +650,7 @@ export function hasInlineMathCandidate(content: string): boolean {
+ export function hasBareLatexTrigger(content: string): boolean {
+   if (!content.includes("\\")) return false;
+   for (const match of content.matchAll(/\\([a-zA-Z]+)/g)) {
+-    if (isMathTriggerCommand(match[1])) return true;
++    if (isMathTriggerCommand(match[1], content.slice(match.index! + match[0].length))) return true;
+   }
+   return false;
+ }
+diff --git a/web/locales/de/app.json b/web/locales/de/app.json
+index cd0e1d2..f6ce70d 100644
+--- a/web/locales/de/app.json
++++ b/web/locales/de/app.json
+@@ -1162,6 +1162,7 @@
+   "ago": "her",
+   "Failed to load image.": "Bild konnte nicht geladen werden.",
+   "Failed to load video.": "Video konnte nicht geladen werden.",
++  "Failed to load audio.": "Audio konnte nicht geladen werden.",
+   "HTML": "HTML",
+   "{{n}} sessions selected": "{{n}} Sitzungen ausgewählt",
+   "Use Selected Sessions ({{n}})": "Ausgewählte Sitzungen nutzen ({{n}})",
+diff --git a/web/locales/en/app.json b/web/locales/en/app.json
+index 01e570d..ca9c74f 100644
+--- a/web/locales/en/app.json
++++ b/web/locales/en/app.json
+@@ -1242,6 +1242,7 @@
+   "ago": "ago",
+   "Failed to load image.": "Failed to load image.",
+   "Failed to load video.": "Failed to load video.",
++  "Failed to load audio.": "Failed to load audio.",
+   "HTML": "HTML",
+   "{{n}} sessions selected": "{{n}} sessions selected",
+   "Use Selected Sessions ({{n}})": "Use Selected Sessions ({{n}})",
+diff --git a/web/locales/fr/app.json b/web/locales/fr/app.json
+index abbba8b..81abf6f 100644
+--- a/web/locales/fr/app.json
++++ b/web/locales/fr/app.json
+@@ -4704,6 +4704,7 @@
+   "Failed to load learner profile": "Échec du chargement du profil d'apprenant",
+   "Failed to load settings.": "Échec du chargement des paramètres.",
+   "Failed to load video.": "Échec du chargement de la vidéo.",
++  "Failed to load audio.": "Impossible de charger l’audio.",
+   "Failed to load workspaces": "Échec du chargement des espaces de travail",
+   "Failed to save answer. Please try again.": "Échec de l'enregistrement de la réponse. Veuillez réessayer.",
+   "Failed to save learner profile": "Échec de l'enregistrement du profil d'apprenant",
+diff --git a/web/locales/ja/app.json b/web/locales/ja/app.json
+index ae0c203..512366f 100644
+--- a/web/locales/ja/app.json
++++ b/web/locales/ja/app.json
+@@ -1144,6 +1144,7 @@
+   "ago": "前",
+   "Failed to load image.": "画像の読み込みに失敗しました。",
+   "Failed to load video.": "動画の読み込みに失敗しました。",
++  "Failed to load audio.": "音声を読み込めませんでした。",
+   "HTML": "HTML",
+   "{{n}} sessions selected": "{{n}} 件のセッションを選択中",
+   "Use Selected Sessions ({{n}})": "選択したセッションを使用（{{n}}）",
+diff --git a/web/locales/pl/app.json b/web/locales/pl/app.json
+index 6b0f4e9..5df5997 100644
+--- a/web/locales/pl/app.json
++++ b/web/locales/pl/app.json
+@@ -1161,6 +1161,7 @@
+   "ago": "temu",
+   "Failed to load image.": "Nie udało się załadować obrazu.",
+   "Failed to load video.": "Nie udało się załadować filmu.",
++  "Failed to load audio.": "Nie udało się załadować dźwięku.",
+   "HTML": "HTML",
+   "{{n}} sessions selected": "{{n}} sesji wybrano",
+   "Use Selected Sessions ({{n}})": "Użyj wybranych sesji ({{n}})",
+diff --git a/web/locales/pt/app.json b/web/locales/pt/app.json
+index 1f15a50..0b18ee4 100644
+--- a/web/locales/pt/app.json
++++ b/web/locales/pt/app.json
+@@ -1143,6 +1143,7 @@
+   "ago": "atrás",
+   "Failed to load image.": "Falha ao carregar a imagem.",
+   "Failed to load video.": "Falha ao carregar o vídeo.",
++  "Failed to load audio.": "Falha ao carregar o áudio.",
+   "HTML": "HTML",
+   "{{n}} sessions selected": "{{n}} sessões selecionadas",
+   "Use Selected Sessions ({{n}})": "Usar sessões selecionadas ({{n}})",
+diff --git a/web/locales/tr/app.json b/web/locales/tr/app.json
+index 9ce59c3..b9ac4b5 100644
+--- a/web/locales/tr/app.json
++++ b/web/locales/tr/app.json
+@@ -1144,6 +1144,7 @@
+   "ago": "önce",
+   "Failed to load image.": "Görsel yüklenemedi.",
+   "Failed to load video.": "Video yüklenemedi.",
++  "Failed to load audio.": "Ses yüklenemedi.",
+   "HTML": "HTML",
+   "{{n}} sessions selected": "{{n}} oturum seçildi",
+   "Use Selected Sessions ({{n}})": "Seçili oturumları kullan ({{n}})",
+diff --git a/web/locales/uk/app.json b/web/locales/uk/app.json
+index d0ecd34..0497b2d 100644
+--- a/web/locales/uk/app.json
++++ b/web/locales/uk/app.json
+@@ -1124,6 +1124,7 @@
+   "ago": "тому",
+   "Failed to load image.": "Не вдалося завантажити зображення.",
+   "Failed to load video.": "Не вдалося завантажити відео.",
++  "Failed to load audio.": "Не вдалося завантажити аудіо.",
+   "HTML": "HTML",
+   "{{n}} sessions selected": "Вибрано сесій: {{n}}",
+   "Use Selected Sessions ({{n}})": "Використати вибрані сесії ({{n}})",
+diff --git a/web/locales/vi/app.json b/web/locales/vi/app.json
+index 59d9d2e..8e53be8 100644
+--- a/web/locales/vi/app.json
++++ b/web/locales/vi/app.json
+@@ -1143,6 +1143,7 @@
+   "ago": "trước",
+   "Failed to load image.": "Không tải được hình ảnh.",
+   "Failed to load video.": "Không tải được video.",
++  "Failed to load audio.": "Không tải được âm thanh.",
+   "HTML": "HTML",
+   "{{n}} sessions selected": "Đã chọn {{n}} phiên",
+   "Use Selected Sessions ({{n}})": "Dùng các phiên đã chọn ({{n}})",
+diff --git a/web/locales/zh/app.json b/web/locales/zh/app.json
+index bdbea4b..f40463c 100644
+--- a/web/locales/zh/app.json
++++ b/web/locales/zh/app.json
+@@ -1368,6 +1368,7 @@
+   "ago": "前",
+   "Failed to load image.": "图片加载失败。",
+   "Failed to load video.": "视频加载失败。",
++  "Failed to load audio.": "音频加载失败，请重试或下载播放。",
+   "HTML": "HTML",
+   "{{n}} sessions selected": "已选 {{n}} 个会话",
+   "Use Selected Sessions ({{n}})": "使用所选会话（{{n}}）",
+diff --git a/web/tests/chat-read-aloud-playback.spec.tsx b/web/tests/chat-read-aloud-playback.spec.tsx
+index c889ea5..e43f715 100644
+--- a/web/tests/chat-read-aloud-playback.spec.tsx
++++ b/web/tests/chat-read-aloud-playback.spec.tsx
+@@ -1,6 +1,7 @@
+ import { act, render, screen } from "@testing-library/react";
+ import userEvent from "@testing-library/user-event";
+ import { afterEach, expect, it, vi } from "vitest";
++import SelectionActions from "@/features/chat/components/SelectionActions";
+ import { PlayAudioButton } from "@/features/chat/messages/ChatMessageList";
+ import { apiFetch } from "@/lib/api";
+ import { notify } from "@/lib/notifications";
+@@ -110,3 +111,35 @@ it("does not show a late speech error after playback is cancelled", async () =>
+   await act(async () => { resolve({ detail: "Speech synthesis timed out." }); });
+   expect(notify).not.toHaveBeenCalled();
+ });
++
++
++it("reads only the selected sentence without a conversation-model request", async () => {
++  installAudio();
++  vi.mocked(apiFetch).mockResolvedValue({ ok: true, blob: async () => new Blob(["audio"], {type: "audio/mpeg"}) } as Response);
++  const onAsk = vi.fn(), onAddToChat = vi.fn(), onAddToNote = vi.fn(), onDismiss = vi.fn();
++  render(<SelectionActions anchor={{left:20,right:250,top:60,bottom:80}} readAloudText="Ben wasn't bored." onAddToChat={onAddToChat} onAddToNote={onAddToNote} onDismiss={onDismiss} onAsk={onAsk} />);
++  await userEvent.setup().click(screen.getByRole("button", {name:"Play aloud"}));
++  expect(await screen.findByRole("button", {name:"Stop"})).toBeVisible();
++  expect(apiFetch).toHaveBeenCalledTimes(1);
++  const [url, options] = vi.mocked(apiFetch).mock.calls[0];
++  expect(String(url)).toContain("/api/voice/tts");
++  expect(JSON.parse(String(options?.body))).toEqual({text:"Ben wasn't bored."});
++  for (const action of [onAsk,onAddToChat,onAddToNote,onDismiss]) expect(action).not.toHaveBeenCalled();
++  await userEvent.setup().click(screen.getByRole("button", {name:"Stop"}));
++  expect(instances[0].pause).toHaveBeenCalled();
++});
++
++
++it("does not return to playing when the clip ended before play resolved", async () => {
++  installAudio();
++  let resolve!: () => void;
++  const pending = new Promise<void>(yes => { resolve = yes; });
++  vi.mocked(apiFetch).mockResolvedValue({ok:true, blob: async () => new Blob(["audio"])} as Response);
++  render(<PlayAudioButton content="Hello" autoPlayFresh={false} />);
++  await act(async () => {
++    screen.getByRole("button", {name:"Play aloud"}).click();
++    instances[0].play.mockReturnValueOnce(pending);
++  });
++  await act(async () => { instances[0].onended?.(); resolve(); });
++  expect(screen.getByRole("button", {name:"Play aloud"})).toBeVisible();
++});
+diff --git a/web/tests/file-previewer.test.ts b/web/tests/file-previewer.test.ts
+index c3bfcf4..6f491a3 100644
+--- a/web/tests/file-previewer.test.ts
++++ b/web/tests/file-previewer.test.ts
+@@ -41,3 +41,8 @@ test("Office attachments retain their format-specific fallback renderers", () =>
+   assert.equal(previewKindFor({ filename: "budget.xlsm" }), "xlsx");
+   assert.equal(previewKindFor({ filename: "legacy.xls" }), "office-text");
+ });
++
++test("audio attachments have a direct native audio preview", () => {
++  for (const filename of ["speech.MP3", "lesson.wav", "listening.m4a", "voice.ogg"]) assert.equal(previewKindFor({ filename }), "audio");
++  assert.equal(previewKindFor({ filename: "attachment", mimeType: "audio/mpeg" }), "audio");
++});
+diff --git a/web/tests/generated-file-cards.spec.tsx b/web/tests/generated-file-cards.spec.tsx
+index f289657..f72f77c 100644
+--- a/web/tests/generated-file-cards.spec.tsx
++++ b/web/tests/generated-file-cards.spec.tsx
+@@ -1,4 +1,4 @@
+-import { render, screen } from "@testing-library/react";
++import { fireEvent, render, screen } from "@testing-library/react";
+ import { describe, expect, it, vi } from "vitest";
+ import { GeneratedFileCards } from "@/features/chat/messages/ChatMessageList";
+ import type { MessageAttachment } from "@/features/chat/ChatStateAdapter";
+@@ -77,3 +77,32 @@ it.each([
+   render(<GeneratedFileCards attachments={[figure]} content={content} />);
+   expect(screen.getByRole("img", { name: "figure.png" })).toBeTruthy();
+ });
++
++
++it("plays a durable generated audio attachment directly in chat without HTML", () => {
++  const audio: MessageAttachment = { ...figure, type: "document", filename: "speech.mp3", mime_type: "audio/mpeg", title: "Listening practice" };
++  const { container, unmount } = render(<GeneratedFileCards attachments={[audio]} content="Here is your audio." />);
++  const player = screen.getByLabelText("speech.mp3") as HTMLAudioElement;
++  expect(player.tagName).toBe("AUDIO");
++  expect(player.controls).toBe(true);
++  expect(player.autoplay).toBe(false);
++  expect(player.getAttribute("src")).toContain("/files/workspace-items/ws_test/wsi_a");
++  expect(container.querySelector("iframe")).toBeNull();
++  const savedUrl = player.getAttribute("src");
++  unmount();
++  render(<GeneratedFileCards attachments={[audio]} />);
++  expect(screen.getByLabelText("speech.mp3").getAttribute("src")).toBe(savedUrl);
++});
++
++it("reports an audio load failure and lets the user reload or download that file", () => {
++  const audio: MessageAttachment = { ...figure, type: "document", filename: "speech.wav", mime_type: "audio/wav" };
++  render(<GeneratedFileCards attachments={[audio]} />);
++  const player = screen.getByLabelText("speech.wav") as HTMLAudioElement;
++  const load = vi.spyOn(player, "load").mockImplementation(() => {});
++  fireEvent.error(player);
++  expect(screen.getByRole("alert")).toHaveTextContent("Failed to load audio.");
++  expect(screen.getByRole("link", {name: "Download"})).toHaveAttribute("download", "speech.wav");
++  fireEvent.click(screen.getByRole("button", {name: "Retry"}));
++  expect(load).toHaveBeenCalledOnce();
++  expect(screen.queryByRole("alert")).toBeNull();
++});
+diff --git a/web/tests/science-formulas.spec.tsx b/web/tests/science-formulas.spec.tsx
+new file mode 100644
+index 0000000..db04e51
+--- /dev/null
++++ b/web/tests/science-formulas.spec.tsx
+@@ -0,0 +1,93 @@
++import { render, waitFor, cleanup } from '@testing-library/react'
++import { afterEach, describe, expect, it } from 'vitest'
++import MarkdownRenderer from '@/components/common/MarkdownRenderer'
++import InlineMarkdown from '@/components/common/InlineMarkdown'
++import NoteMath from '@/features/notes/components/NoteMath'
++import { hasMarkdownMath, convertLatexDelimiters } from '@/lib/latex'
++import { initI18n } from '@/i18n/init'
++initI18n('zh')
++afterEach(cleanup)
++
++const cases = [
++  ['physics-vector', String.raw`\vec{F}=m\vec{a}`],
++  ['physics-units', String.raw`v=9.8\,\mathrm{m}\,\mathrm{s}^{-1}`],
++  ['physics-derivative', String.raw`a=\frac{\mathrm{d}v}{\mathrm{d}t},\quad v=\frac{\partial x}{\partial t}`],
++  ['physics-electricity', String.raw`R=10\,\mathrm{k}\Omega,\quad I=2\,\mu\mathrm{A}`],
++  ['chemistry-charge', String.raw`\ce{Fe^{3+} + 3 OH- -> Fe(OH)3 v}`],
++  ['chemistry-reversible', String.raw`\ce{N2 + 3H2 <=> 2NH3}`],
++  ['chemistry-conditions', String.raw`\ce{CaCO3 ->[\Delta] CaO + CO2 ^}`],
++  ['chemistry-isotope', String.raw`\ce{^{14}_{6}C}`],
++  ['chemistry-chinese-conditions', String.raw`\ce{2H2 + O2 ->[\text{点燃}] 2H2O}`],
++  ['biology-photosynthesis', String.raw`\ce{6CO2 + 6H2O ->[\text{光照}] C6H12O6 + 6O2}`],
++  ['geography-ratio', String.raw`\text{比例尺}=\frac{\text{图上距离}}{\text{实际距离}}`],
++  ['science-physical-units', String.raw`\pu{1.2e3 J mol-1}`],
++] as const
++for (const [name, formula] of cases) {
++  describe(name, () => {
++    it('renders in chat Markdown without raw unsupported commands', async () => {
++      const { container } = render(<MarkdownRenderer content={`本题：$${formula}$。`} allowHtml={false} />)
++      await waitFor(() => expect(container.querySelector('.katex-html')).not.toBeNull())
++      expect(container.querySelector('.katex-error')).toBeNull()
++      expect(container.querySelector('.katex-html')?.textContent).not.toMatch(/\\(?:ce|pu|vec|frac)/)
++      expect(container.querySelector('annotation')?.textContent).toBe(formula)
++    })
++    it('renders in inline questions and saved note formulas', async () => {
++      const { container, rerender } = render(<InlineMarkdown content={`$${formula}$`} />)
++      await waitFor(() => expect(container.querySelector('.katex-html')).not.toBeNull())
++      expect(container.querySelector('.katex-error')).toBeNull()
++      expect(container.querySelector('.katex-html')?.textContent).not.toMatch(/\\(?:ce|pu|vec|frac)/)
++      rerender(<NoteMath formula={formula} />)
++      expect(container.querySelector('.katex-html')).not.toBeNull()
++      expect(container.querySelector('.katex-error')).toBeNull()
++      expect(container.querySelector('annotation')?.textContent).toBe(formula)
++      expect(container.querySelector('.katex-html')?.textContent).not.toMatch(/\\(?:ce|pu|vec|frac)/)
++    })
++  })
++}
++it.each([String.raw`\ce{2H2 + O2 -> 2H2O}`, String.raw`\pu{9.8 m/s2}`])('recognizes explicit chemistry/unit commands without dollar delimiters: %s', formula => {
++  expect(hasMarkdownMath(formula)).toBe(true)
++  expect(convertLatexDelimiters(`读作 ${formula}。`)).toBe(`读作 $${formula}$。`)
++})
++it('does not turn incomplete commands, paths or fenced source examples into formulas', () => {
++  for (const value of [String.raw`C:\ce\notes`, String.raw`C:\pu\units`, String.raw`\ce`, String.raw`\pu`]) {
++    expect(convertLatexDelimiters(value)).toBe(value)
++    expect(hasMarkdownMath(value)).toBe(false)
++  }
++  const code = '```tex\n\\ce{H2O}\n\\pu{9.8 m/s2}\n```'
++  expect(convertLatexDelimiters(code)).toBe(code)
++})
++
++it('keeps chemistry charge, reaction direction and unit source intact through note table import', async () => {
++  const { BlockNoteEditor } = await import('@blocknote/core')
++  const { parseNoteMarkdown, normalizeNoteMath } = await import('@/features/notes/model/markdown')
++  const { blockPreview } = await import('@/features/notes/model/blocks')
++  const editor = BlockNoteEditor.create()
++  const charge = String.raw`\ce{Fe^{3+} + 3OH- -> Fe(OH)3 v}`
++  const equilibrium = String.raw`\ce{N2 + 3H2 <=> 2NH3}`
++  const units = String.raw`\pu{9.8 m/s2}`
++  const original = `| 原件 | 公式 |\n|---|---|\n| 电荷 | $${charge}$ |\n| 可逆反应 | $${equilibrium}$ |\n| 单位 | ${units} |`
++  try {
++    const blocks = parseNoteMarkdown(original, text => editor.tryParseMarkdownToBlocks(text) as import('@/lib/notes-api').NoteBlock[])
++    const before = structuredClone(blocks)
++    const normalized = normalizeNoteMath(blocks)
++    expect(blocks).toEqual(before)
++    const roundtrip = normalized.map(blockPreview).join('\n')
++    expect(roundtrip).toContain(charge)
++    expect(roundtrip).toContain(equilibrium)
++    expect(roundtrip).toContain(units)
++    expect(JSON.stringify(normalized).match(/inlineMath/g)).toHaveLength(3)
++  } finally { editor._tiptapEditor.destroy() }
++})
++it('retains trust restrictions after loading the chemistry extension', () => {
++  const { container } = render(<NoteMath formula={String.raw`\href{javascript:alert(1)}{unsafe}`} />)
++  expect(container.querySelector('a, img, iframe')).toBeNull()
++})
++it('typesets reversible and forward arrows, charge superscripts and precipitate markers', () => {
++  const { container, rerender } = render(<NoteMath formula={String.raw`\ce{N2 + 3H2 <=> 2NH3}`} />)
++  expect([...container.querySelectorAll('math mo')].map(node=>node.textContent)).toContain('⇌')
++  rerender(<NoteMath formula={String.raw`\ce{Fe^{3+} + 3OH- -> Fe(OH)3 v}`} />)
++  const operators=[...container.querySelectorAll('math mo')].map(node=>node.textContent)
++  expect(operators).toContain('→')
++  expect(operators).toContain('↓')
++  expect([...container.querySelectorAll('math msup')].some(node=>node.textContent?.includes('3+'))).toBe(true)
++})

@@ -1,14 +1,17 @@
 {
-  "tag": "student-20261114-materials",
-  "source_commit": "842d6654666e20e606f31245cc20730807562ad8",
-  "baseline_source_commit": "8e31f68080a9c746f409c1191caf167b421a939e",
-  "patch_sha256": "a737ad1efdeb43cb46a3e10b7614c357fd9cb8c12d61978bdcca81cfe4645f33",
-  "archive": "kaixin-core-20261114-materials.tar.gz",
+  "tag": "student-20261114-audio",
+  "source_commit": "651fbd6a41f8649c53c23f3fea79de98776cde05",
+  "baseline_source_commit": "842d6654666e20e606f31245cc20730807562ad8",
+  "patch_sha256": "8befd8590285bf0d6632cccbb12cb4b30ad8c5076d519f2a17fc2cd0b35a1625",
+  "archive": "kaixin-core-20261114-audio.tar.gz",
   "prior_core": {
-    "archive": "kaixin-core-20261114-library.tar.gz",
-    "sha256": "becd75e830f9e632bcf898a7d62dfdd76dccc6281eac82fffde15f225c93334f"
+    "archive": "kaixin-core-20261114-materials.tar.gz",
+    "sha256": "d0498a88ec722d36be81d87d84fec08f1986fec6747780b6bb2185619b4c615d"
   },
-  "new_backend_files": [],
+  "new_backend_files": [
+    "deeptutor/tools/prompting/hints/zh/speechgen.yaml",
+    "deeptutor/tools/prompting/hints/en/speechgen.yaml"
+  ],
   "web_tests": [
     "tests/pending-material.spec.ts",
     "tests/student-materials.spec.tsx",
@@ -33,7 +36,12 @@
     "tests/notes-previews.spec.tsx",
     "tests/notes-clip-editing.spec.ts",
     "tests/notes-math-import.spec.ts",
-    "tests/mistake-math-rendering.spec.tsx"
+    "tests/mistake-math-rendering.spec.tsx",
+    "tests/science-formulas.spec.tsx",
+    "tests/generated-file-cards.spec.tsx",
+    "tests/chat-read-aloud-playback.spec.tsx",
+    "tests/chat-selection-actions.spec.tsx",
+    "tests/voice-settings.spec.tsx"
   ],
-  "source_files_sha256": "ccf67077fc401725ca72379c3addc7e6add0c44afe91bf7bdc00fcdc92fb256a"
+  "source_files_sha256": "5c5f5c7825349fcebbe5a235926b78e5fabb5e4f15e97b6f1b8a5141952f780b"
 }

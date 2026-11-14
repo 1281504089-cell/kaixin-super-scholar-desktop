@@ -168,6 +168,11 @@
       "file": "student-materials-20261114.patch",
       "sha256": "a737ad1efdeb43cb46a3e10b7614c357fd9cb8c12d61978bdcca81cfe4645f33",
       "description": "Keep bulk originals uploading across application pages, reference authorized library originals in chat, read historical documents on demand, isolate HTML listening with device speech, and render saved note and mistake formulas"
+    },
+    {
+      "file": "student-chat-audio-20261114.patch",
+      "sha256": "8befd8590285bf0d6632cccbb12cb4b30ad8c5076d519f2a17fc2cd0b35a1625",
+      "description": "Generate real speech files directly in chat, read selected text without a model request, and render physics/chemistry notation."
     }
   ]
 }
