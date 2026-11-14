@@ -23,7 +23,7 @@ dialog.showMessageBox = async (...args) => {
   return { response: 0 };
 };
 dialog.showErrorBox = (title, detail) => { console.error(title + ': ' + detail); app.exit(1); };
-const timer = setTimeout(() => { console.error('Native update flow timed out'); app.exit(1); }, 900000);
+const timer = setTimeout(() => { console.error('Native update flow timed out'); app.exit(1); }, 1300000);
 async function content() {
   for (const window of BrowserWindow.getAllWindows()) {
     const found = window.contentView.children.find(view => view.webContents?.getURL().startsWith('http://127.0.0.1:'));
@@ -78,7 +78,12 @@ async function content() {
     for (const label of ['收藏夹', '学习日志', '题库', '书籍', '阅读']) assert.ok(!menu.split('\n').includes(label), label);
     await view.executeJavaScript(`document.querySelector('button[aria-label="资源"]')?.click()`);
     await require('node:fs/promises').writeFile(path.join(path.dirname(output), 'native-ui-updated.png'), (await view.capturePage()).toPNG());
-    const library = await require('./materials-ui.cjs')(view, path.dirname(output), JSON.parse(readFileSync(path.join(home, 'attachment-fixture.json'))));
+    const fixture = JSON.parse(readFileSync(path.join(home, 'attachment-fixture.json')));
+    const library = await require('./materials-ui.cjs')(view, path.dirname(output), fixture);
+    const audio = await require('./ci-chat-audio-ui.cjs')(view, path.dirname(output), fixture.audio);
+    const science = await require('./science-ui.cjs').verifyScienceNative(view, path.dirname(output), fixture.science);
+    assert.equal(audio.passed, true);
+    assert.equal(science.passed, true);
     await view.executeJavaScript('window.kaixinDesktop.checkForUpdates()');
     assert.equal(current, true);
     writeFileSync(output, JSON.stringify({
@@ -87,7 +92,7 @@ async function content() {
       production_main_unchanged: true, candidate_feed_routed_only_in_test: true, from_runtime: before.runtimeId, to_runtime: after.runtimeId,
       actual_download_install_backup_restart: 'passed', transaction: transaction.phase,
       check_again_current: true, old_renderer_closed_after_update: Boolean(invokeError),
-      library_bulk_upload: library,
+      library_bulk_upload: library, chat_audio: audio, science_formulas: science,
     }, null, 2));
     clearTimeout(timer);
     app.quit();

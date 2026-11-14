@@ -1,10 +1,10 @@
 {
-  "tag": "student-20261114-materials",
+  "tag": "student-20261114-audio",
   "launcher_build": "20261114-unified",
-  "core_commit": "842d6654666e20e606f31245cc20730807562ad8",
-  "combined_source_commit": "842d6654666e20e606f31245cc20730807562ad8",
-  "prior_tag": "student-20261114-library",
-  "builtAt": 1794647878145,
+  "core_commit": "651fbd6a41f8649c53c23f3fea79de98776cde05",
+  "combined_source_commit": "651fbd6a41f8649c53c23f3fea79de98776cde05",
+  "prior_tag": "student-20261114-materials",
+  "builtAt": 1794668769140,
   "manifests": {
     "windows-x64": {
       "formatVersion": 1,
@@ -12,14 +12,14 @@
       "platform": "win32",
       "arch": "x64",
       "coreVersion": "1.7.1",
-      "runtimeId": "1.7.1-kaixin-20261114-materials-windows-x64-20261112",
+      "runtimeId": "1.7.1-kaixin-20261114-audio-windows-x64-20261112",
       "baseRuntimeId": "1.7.1-04276f68a-x64",
-      "commit": "842d6654666e20e606f31245cc20730807562ad8",
-      "builtAt": 1794647878145,
-      "archive": "kaixin-core-20261114-materials.tar.gz",
-      "sha256": "d0498a88ec722d36be81d87d84fec08f1986fec6747780b6bb2185619b4c615d",
-      "corePayloadSha256": "d0498a88ec722d36be81d87d84fec08f1986fec6747780b6bb2185619b4c615d",
-      "signature": "RABLgmO7t7b121KlCdbGXgUALlvhrs3HJi6G4yfAM9nPqy/HJsGwvLmhAmxdU90yCKQPl+O3XarGMaHFsUopBg=="
+      "commit": "651fbd6a41f8649c53c23f3fea79de98776cde05",
+      "builtAt": 1794668769140,
+      "archive": "kaixin-core-20261114-audio.tar.gz",
+      "sha256": "362fc67900c8b77be93eb7c967ffe6c96334af6a0f3362065cddbc20d73a64d1",
+      "corePayloadSha256": "362fc67900c8b77be93eb7c967ffe6c96334af6a0f3362065cddbc20d73a64d1",
+      "signature": "LSllGGFjlcy6QdmCiNiQwGk/Ziza/VbNqw13Ypep2iuSDct0ATEsT0Pucr5klPyEmUy+jC6nUab4iwVWZJj0Cw=="
     },
     "macos-x64": {
       "formatVersion": 1,
@@ -27,14 +27,14 @@
       "platform": "darwin",
       "arch": "x64",
       "coreVersion": "1.7.1",
-      "runtimeId": "1.7.1-kaixin-20261114-materials-macos-x64-20261112",
+      "runtimeId": "1.7.1-kaixin-20261114-audio-macos-x64-20261112",
       "baseRuntimeId": "1.7.1-04276f68a-x64",
-      "commit": "842d6654666e20e606f31245cc20730807562ad8",
-      "builtAt": 1794647878145,
-      "archive": "kaixin-core-20261114-materials.tar.gz",
-      "sha256": "d0498a88ec722d36be81d87d84fec08f1986fec6747780b6bb2185619b4c615d",
-      "corePayloadSha256": "d0498a88ec722d36be81d87d84fec08f1986fec6747780b6bb2185619b4c615d",
-      "signature": "0WA9vmfSxHXo47dWtglLxMLuep4UrueSNSQ7K1HBqgoikzuDdcWp1roXWiQHqALdV3ESqX98zc1O8xkmKWq6Bg=="
+      "commit": "651fbd6a41f8649c53c23f3fea79de98776cde05",
+      "builtAt": 1794668769140,
+      "archive": "kaixin-core-20261114-audio.tar.gz",
+      "sha256": "362fc67900c8b77be93eb7c967ffe6c96334af6a0f3362065cddbc20d73a64d1",
+      "corePayloadSha256": "362fc67900c8b77be93eb7c967ffe6c96334af6a0f3362065cddbc20d73a64d1",
+      "signature": "zXBsAahoF70cJA9By+JGFEiCsbd0vsQW71moYEV5ClL4U91PiwU1iEi0tZ8GsxMshj1dgLBC1kjTtHZOHDjYBQ=="
     },
     "macos-arm64": {
       "formatVersion": 1,
@@ -42,22 +42,21 @@
       "platform": "darwin",
       "arch": "arm64",
       "coreVersion": "1.7.1",
-      "runtimeId": "1.7.1-kaixin-20261114-materials-macos-arm64-20261112",
+      "runtimeId": "1.7.1-kaixin-20261114-audio-macos-arm64-20261112",
       "baseRuntimeId": "1.7.1-04276f68a-arm64",
-      "commit": "842d6654666e20e606f31245cc20730807562ad8",
-      "builtAt": 1794647878145,
-      "archive": "kaixin-core-20261114-materials.tar.gz",
-      "sha256": "d0498a88ec722d36be81d87d84fec08f1986fec6747780b6bb2185619b4c615d",
-      "corePayloadSha256": "d0498a88ec722d36be81d87d84fec08f1986fec6747780b6bb2185619b4c615d",
-      "signature": "akhABOYUMERgE0hMKp2LV7f6NHP0jXPXIhYHR7FzmSN1NdvcMdpsnje6qnfn1/XtUYviCoRz+ua1cyYlGfJSDw=="
+      "commit": "651fbd6a41f8649c53c23f3fea79de98776cde05",
+      "builtAt": 1794668769140,
+      "archive": "kaixin-core-20261114-audio.tar.gz",
+      "sha256": "362fc67900c8b77be93eb7c967ffe6c96334af6a0f3362065cddbc20d73a64d1",
+      "corePayloadSha256": "362fc67900c8b77be93eb7c967ffe6c96334af6a0f3362065cddbc20d73a64d1",
+      "signature": "9OIYFTHGOUJLk/97+crJhU3MzLtRVM6oNL2DULcPtGac3kGsHwgZyplZzaTxf9xMQqxUxT7P1CJMQdaM1VgfDg=="
     }
   },
   "core_asset": {
-    "name": "kaixin-core-20261114-materials.tar.gz",
-    "size": 26739567,
-    "digest": "sha256:d0498a88ec722d36be81d87d84fec08f1986fec6747780b6bb2185619b4c615d",
-    "browser_download_url": "https://github.com/1281504089-cell/kaixin-k12-tutor/releases/download/student-20261114-materials/kaixin-core-20261114-materials.tar.gz",
-    "state": "uploaded"
+    "name": "kaixin-core-20261114-audio.tar.gz",
+    "browser_download_url": "https://github.com/1281504089-cell/kaixin-k12-tutor/releases/download/student-20261114-audio/kaixin-core-20261114-audio.tar.gz",
+    "digest": "sha256:362fc67900c8b77be93eb7c967ffe6c96334af6a0f3362065cddbc20d73a64d1",
+    "size": 26768307
   },
   "shell_files": {
     "src/main.mjs": {

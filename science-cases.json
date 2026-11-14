@@ -1,0 +1,50 @@
+[
+  [
+    "physics-vector",
+    "\\vec{F}=m\\vec{a}"
+  ],
+  [
+    "physics-units",
+    "v=9.8\\,\\mathrm{m}\\,\\mathrm{s}^{-1}"
+  ],
+  [
+    "physics-derivative",
+    "a=\\frac{\\mathrm{d}v}{\\mathrm{d}t},\\quad v=\\frac{\\partial x}{\\partial t}"
+  ],
+  [
+    "physics-electricity",
+    "R=10\\,\\mathrm{k}\\Omega,\\quad I=2\\,\\mu\\mathrm{A}"
+  ],
+  [
+    "chemistry-charge",
+    "\\ce{Fe^{3+} + 3 OH- -> Fe(OH)3 v}"
+  ],
+  [
+    "chemistry-reversible",
+    "\\ce{N2 + 3H2 <=> 2NH3}"
+  ],
+  [
+    "chemistry-conditions",
+    "\\ce{CaCO3 ->[\\Delta] CaO + CO2 ^}"
+  ],
+  [
+    "chemistry-isotope",
+    "\\ce{^{14}_{6}C}"
+  ],
+  [
+    "chemistry-chinese-conditions",
+    "\\ce{2H2 + O2 ->[\\text{点燃}] 2H2O}"
+  ],
+  [
+    "biology-photosynthesis",
+    "\\ce{6CO2 + 6H2O ->[\\text{光照}] C6H12O6 + 6O2}"
+  ],
+  [
+    "geography-ratio",
+    "\\text{比例尺}=\\frac{\\text{图上距离}}{\\text{实际距离}}"
+  ],
+  [
+    "science-physical-units",
+    "\\pu{1.2e3 J mol-1}"
+  ]
+]

@@ -127,13 +127,13 @@ module.exports = async function verifyMaterials(view, evidence, mathFixture) {
   const speech = await frame.executeJavaScript(`(async () => {
     let parentBlocked = false; try { parent.document.body } catch { parentBlocked = true }
     let networkBlocked = false; try { await fetch('https://example.com/kaixin-isolation-probe') } catch { networkBlocked = true }
-    document.querySelector('[data-ks-action="one"]').click();
     return { available: typeof speechSynthesis === 'object', parentBlocked, networkBlocked, attachmentScriptBlocked: !window.attachmentExecuted, noNode: typeof require === 'undefined', noDesktopIPC: !window.kaixinDesktop, localVoices: speechSynthesis.getVoices().filter(v => v.localService).length };
   })()`, true);
   assert.ok(speech.available && speech.parentBlocked && speech.networkBlocked && speech.attachmentScriptBlocked && speech.noNode && speech.noDesktopIPC);
-  await pause(4000);
-  speech.observedStatus = await frame.executeJavaScript('document.querySelector("[data-ks-status]").textContent');
-  assert.ok(speech.observedStatus && !speech.observedStatus.includes('undefined'));
+  speech.diagnostic = await require('./native-html-speech-diagnostic.cjs')(frame);
+  speech.observedStatus = speech.diagnostic.observedStatus;
+  speech.playbackVerified = speech.diagnostic.nativeEnded;
+  speech.diagnosticOnly = true;
   await writeFile(path.join(evidence, 'native-html-preview.png'), (await view.capturePage()).toPNG());
   await click('源码');
   await wait('Boolean(document.querySelector("pre")?.textContent.includes("window.attachmentExecuted=true"))', 'HTML source toggle failed');

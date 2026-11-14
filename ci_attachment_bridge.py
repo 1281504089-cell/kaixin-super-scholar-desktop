@@ -14,12 +14,12 @@ def prepare_bridge(root,target,resources,home,evidence,batch):
  with tarfile.open(resources/'update'/batch['core_asset']['name']) as archive:archive.extractall(stage,filter='data')
  held.rename(stage/'web/node_modules')
  out=root/('bridge-'+target);out.mkdir()
- archive=out/('kaixin-bridge-20261114-materials-'+target+'.tar.gz')
+ archive=out/('kaixin-bridge-20261114-audio-'+target+'.tar.gz')
  with tarfile.open(archive,'w:gz',compresslevel=6) as bundle:
   for file in sorted(stage.iterdir()):
    if file.name not in {'student-seed','SOURCE.tar.gz','installed.json'}:bundle.add(file,arcname=file.name)
  assert archive.stat().st_size<2*1024**3
- unsigned={**{k:batch['manifests'][target][k] for k in ['formatVersion','protocolVersion','platform','arch','coreVersion','commit','builtAt','corePayloadSha256']},'runtimeId':'1.7.1-kaixin-20261114-materials-'+target+'-universal','archive':archive.name,'sha256':sha(archive)}
+ unsigned={**{k:batch['manifests'][target][k] for k in ['formatVersion','protocolVersion','platform','arch','coreVersion','commit','builtAt','corePayloadSha256']},'runtimeId':'1.7.1-kaixin-20261114-audio-'+target+'-universal','archive':archive.name,'sha256':sha(archive)}
  unsigned_file=out/('runtime-'+target+'.unsigned.json');unsigned_file.write_text(json.dumps(unsigned,indent=2))
  subprocess.run(['python','bootstrap_source.py','--with-updates'],check=True)
  bridge_home=root/('bridge-profile-'+target)

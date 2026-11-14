@@ -65,7 +65,7 @@ def prepare_candidate(root, target, install, resources, downloads, evidence, loc
         subprocess.run(['/usr/bin/codesign', '--verify', '--deep', '--strict', str(app)], check=True)
         shutil.rmtree(downloads)
         (install / 'Applications').symlink_to('/Applications')
-        stem = 'Kaixin-Super-Scholar-MacOS-' + ('Intel' if target == 'macos-x64' else 'Apple-Silicon') + '-v1.7.1-20261114-materials'
+        stem = 'Kaixin-Super-Scholar-MacOS-' + ('Intel' if target == 'macos-x64' else 'Apple-Silicon') + '-v1.7.1-20261114-audio'
         image = out / (stem + '.dmg')
         subprocess.run(['/usr/bin/hdiutil', 'create', '-volname', '开心动力超级学霸', '-srcfolder', str(install),
                         '-fs', 'APFS', '-format', 'ULFO', str(image)], check=True)
