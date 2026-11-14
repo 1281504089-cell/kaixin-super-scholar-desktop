@@ -21,6 +21,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Record publication run
+        run: |
+          python -c 'import json,os;open("publication-run.json","w").write(json.dumps({"run_id":int(os.environ["GITHUB_RUN_ID"]),"workflow_commit":os.environ["GITHUB_SHA"]}))'
+          tag=$(python -c 'import json;print(json.load(open("attachment-publication.json"))["tag"])')
+          gh release upload "$tag" publication-run.json --clobber
       - name: Verify three native proofs and switch signed batch
         run: python ci-promote-attachments.py
       - name: Keep publication receipts and previous defaults
