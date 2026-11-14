@@ -1,0 +1,56 @@
+name: Isolated Windows audio diagnosis
+on:
+  push:
+    branches: [qa/native-audio-20261114]
+    paths: [qa/native-audio/**, .github/workflows/native-audio-diagnostics.yml]
+permissions:
+  contents: read
+jobs:
+  audio:
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Isolated exact Electron version and negative audio gates
+        shell: pwsh
+        run: |
+          npm install --prefix .qa-audio-tools --no-audit --no-fund electron@45.1.0
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node --test qa/native-audio/audio-checks.test.cjs
+          exit $LASTEXITCODE
+      - name: Inventory untouched runner and generate real SAPI speech if available
+        shell: powershell
+        run: qa/native-audio/windows-audio.ps1 -OutputDirectory evidence/baseline
+      - name: Capture baseline native errors without hiding failed outcome
+        id: baseline
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $env:KX_AUDIO_EVIDENCE = "$pwd/evidence/baseline"
+          & .qa-audio-tools/node_modules/electron/dist/electron.exe qa/native-audio/probe.cjs 2>&1 | Tee-Object evidence/baseline/chromium.log
+          exit $LASTEXITCODE
+      - name: Start existing audio services only and record changed environment
+        shell: powershell
+        run: qa/native-audio/windows-audio.ps1 -OutputDirectory evidence/services-started -StartAudioServices
+      - name: Strict real-file decode and native playback gate
+        shell: pwsh
+        run: |
+          $env:KX_AUDIO_EVIDENCE = "$pwd/evidence/services-started"
+          & .qa-audio-tools/node_modules/electron/dist/electron.exe qa/native-audio/probe.cjs 2>&1 | Tee-Object evidence/services-started/chromium.log
+          exit $LASTEXITCODE
+      - name: Retain exact errors and non-silent audio evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-audio-windows
+          retention-days: 1
+          path: |
+            evidence/**/*.json
+            evidence/**/*.log
+            evidence/**/*.png
+            evidence/**/*.wav
