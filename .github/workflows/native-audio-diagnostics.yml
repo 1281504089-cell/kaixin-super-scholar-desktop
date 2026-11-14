@@ -21,6 +21,9 @@ jobs:
         run: |
           npm install --prefix .qa-audio-tools --no-audit --no-fund electron@45.1.0
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node .qa-audio-tools/node_modules/electron/install.js
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          if (!(Test-Path .qa-audio-tools/node_modules/electron/dist/electron.exe)) { throw "Electron binary was not installed" }
           node --test qa/native-audio/audio-checks.test.cjs
           exit $LASTEXITCODE
       - name: Inventory untouched runner and generate real SAPI speech if available
