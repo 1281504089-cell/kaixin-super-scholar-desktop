@@ -1,0 +1,88 @@
+{
+  "tag": "student-20261114-materials",
+  "release_id": 445169286,
+  "core_commit": "842d6654666e20e606f31245cc20730807562ad8",
+  "core_sha256": "d0498a88ec722d36be81d87d84fec08f1986fec6747780b6bb2185619b4c615d",
+  "launcher_build": "20261114-unified",
+  "installation_directory": "开心动力超级学霸安装包/2026-11-14-三类安装",
+  "files": [
+    {
+      "target": "windows-x64",
+      "file": "01-从零安装/Windows/Kaixin-K12-Tutor-20261114-materials-Windows-Full.zip",
+      "bytes": 7169005602,
+      "sha256": "8c0326cb4105d5cb559ae1ec4f28173e3835b4d24f20fea44e4afa37467f0c1b",
+      "usb_readback_verified": true
+    },
+    {
+      "target": "legacy-launcher-migration",
+      "file": "02-装过前一个补丁/Windows/Kaixin-Launcher-Migration-d3214451efd0-windows-x64-Setup.exe",
+      "bytes": 159892786,
+      "sha256": "4650036eae7ea9f7a713fbee8eb008547d94e6677dd71c53a01786f3f6f13ea6",
+      "usb_readback_verified": true
+    },
+    {
+      "target": "legacy-launcher-migration",
+      "file": "03-旧版未装过任何补丁/Windows/Kaixin-Launcher-Migration-d3214451efd0-windows-x64-Setup.exe",
+      "bytes": 159892786,
+      "sha256": "4650036eae7ea9f7a713fbee8eb008547d94e6677dd71c53a01786f3f6f13ea6",
+      "usb_readback_verified": true
+    },
+    {
+      "target": "legacy-launcher-migration",
+      "file": "02-装过前一个补丁/Mac-Apple芯片/Kaixin-Launcher-Migration-d3214451efd0-macos-arm64.zip",
+      "bytes": 122802302,
+      "sha256": "43f32b93155c5e3a5fbd25b81b3248d51fc095d276733881eea6899697b07fbe",
+      "usb_readback_verified": true
+    },
+    {
+      "target": "legacy-launcher-migration",
+      "file": "03-旧版未装过任何补丁/Mac-Apple芯片/Kaixin-Launcher-Migration-d3214451efd0-macos-arm64.zip",
+      "bytes": 122802302,
+      "sha256": "43f32b93155c5e3a5fbd25b81b3248d51fc095d276733881eea6899697b07fbe",
+      "usb_readback_verified": true
+    },
+    {
+      "target": "legacy-launcher-migration",
+      "file": "02-装过前一个补丁/Mac-Intel/Kaixin-Launcher-Migration-d3214451efd0-macos-x64.zip",
+      "bytes": 128816569,
+      "sha256": "6e0f55d4aecf9d10e58c6bd8ae709469e6dedc21e0053beb28ec0bb0c509c585",
+      "usb_readback_verified": true
+    },
+    {
+      "target": "legacy-launcher-migration",
+      "file": "03-旧版未装过任何补丁/Mac-Intel/Kaixin-Launcher-Migration-d3214451efd0-macos-x64.zip",
+      "bytes": 128816569,
+      "sha256": "6e0f55d4aecf9d10e58c6bd8ae709469e6dedc21e0053beb28ec0bb0c509c585",
+      "usb_readback_verified": true
+    },
+    {
+      "target": "macos-x64",
+      "file": "01-从零安装/Mac-Intel/Kaixin-Super-Scholar-MacOS-Intel-v1.7.1-20261114-materials.dmg",
+      "bytes": 7160643660,
+      "sha256": "3f1714f0f697381fa1464434e5cb01cd697ddec1f68e19def786a97b4974cc93",
+      "usb_readback_verified": true
+    },
+    {
+      "target": "macos-arm64",
+      "file": "01-从零安装/Mac-Apple芯片/Kaixin-Super-Scholar-MacOS-Apple-Silicon-v1.7.1-20261114-materials.dmg",
+      "bytes": 7091595658,
+      "sha256": "1691809eb0c9fd5127dab3eef62642e165a737835f6811e503b664ca37bd0c2b",
+      "usb_readback_verified": true
+    }
+  ],
+  "verified_payload_files": 9,
+  "ordinary_single_mac_images": 2,
+  "complete_windows_zip": true,
+  "three_native_install_and_update_tests": "passed",
+  "superseded_installation_removed": true,
+  "old_bytes_removed": 22299025146,
+  "protected_math_documents": 6,
+  "other_materials_unchanged": true,
+  "legacy_migration_unchanged_reused_from": "student-20261114-unified",
+  "legacy_migration_retested_this_batch": false,
+  "free_bytes_after": 40600600576,
+  "completed_at_utc": "2026-11-14T13:32:07.887998+00:00",
+  "physical_user_devices_all_tested": false,
+  "freed_bytes_during_old_cleanup": 22307536896,
+  "net_free_bytes_change_from_start": 54132736
+}

@@ -110,7 +110,7 @@
     "realLearnerData": false,
     "modelCalls": 0
   },
-  "source_freeze": "FROZEN-SOURCE.json",
+  "source_freeze": "attachment-release.json",
   "production_core_build": {
     "run_id": 43579564634,
     "workflow_commit": "5295f64f71c1b81786d502bbbee13fc2ef88b83b",
@@ -408,7 +408,7 @@
   "published": true,
   "real_keys_used": false,
   "real_learner_data_modified": false,
-  "usb_modified": false,
+  "usb_modified": true,
   "core_payload_readback": {
     "public_archive_sha256_verified": true,
     "frozen_backend_files_byte_identical": true,
@@ -598,5 +598,10 @@
     "current_full_install_does_not_downgrade": true,
     "earliest_base_gets_automatic_native_bridge": true,
     "real_user_profile_modified": false
-  }
+  },
+  "usb_delivery_completed": true,
+  "usb_delivery_receipt": "USB-DELIVERY-RECEIPT.json",
+  "usb_verified_payloads": 9,
+  "usb_old_installation_removed": true,
+  "usb_protected_math_documents_unchanged": 6
 }

@@ -65,7 +65,7 @@ Kaixin K12 Tutor is a DeepTutor-based desktop study companion for Chinese-speaki
 3. Windows 下载 1 个 `Setup.exe` 和 4 个 `Runtime.001` 至 `Runtime.004`。双击 Setup，安装器会校验并合并分卷。
 4. 建议预留 40 GB 临时空间。安装校验和首次启动解压都可能需要几分钟。
 
-**GitHub 提供经过校验的安装分卷**，每个附件小于 2 GiB。U 盘提供同批单文件 Mac 镜像和 Windows 完整 ZIP，实际写入与校验结果以 USB-DELIVERY-RECEIPT.json 为准。
+**GitHub 提供经过校验的安装分卷**，每个附件小于 2 GiB。本批 U 盘已同步两种 Mac 单文件 DMG 和 Windows 完整 ZIP；9 份安装／迁移文件已回读校验，旧完整包已删除，6 份数学资料保持原样。[介质交付回执](USB-DELIVERY-RECEIPT.json)。
 
 <details>
 <summary>Mac 打开分卷提示错误 109、110 或“镜像无法识别”</summary>

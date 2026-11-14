@@ -556,11 +556,12 @@
   "publication_run": 43595489561,
   "usb_delivery": {
     "completed": true,
+    "tag": "student-20261114-materials",
+    "updated_for_this_release": true,
     "verified_payload_files": 9,
     "superseded_installation_directories_removed": true,
     "other_materials_preserved": true,
-    "tag": "student-20261114-unified",
-    "updated_for_this_release": false
+    "receipt": "USB-DELIVERY-RECEIPT.json"
   },
   "release_skill": "skills/scholar-desktop-release/SKILL.md",
   "physical_student_devices_all_tested": false,

@@ -10,6 +10,6 @@ HTML/HTM 附件默认显示安全页面，可切到源码。附件自带任意�
 
 核心运行包去除只供开发文档展示的两组截图，完整源码、许可证、教材、品牌图和所需运行资源保留。相容运行环境使用较小的核心更新；最早环境首次可能仍需自动获取兼容原生资源，网络速度也影响等待。
 
-统一发布前必须通过 Windows x64、Intel Mac x64、Apple 芯片 Mac arm64 的原生新装、检查更新、校验备份重开、再次检查及学习记录保留。实际结果以本批 PUBLICATION-RECEIPT.json 和三份 verification-系统.json 为准。U 盘按用户授权同步，具体介质状态以 USB-DELIVERY-RECEIPT.json 为准。
+统一发布前必须通过 Windows x64、Intel Mac x64、Apple 芯片 Mac arm64 的原生新装、检查更新、校验备份重开、再次检查及学习记录保留。实际结果以本批 PUBLICATION-RECEIPT.json 和三份 verification-系统.json 为准。U 盘已同步同批单文件 Mac 镜像与 Windows 完整 ZIP，9 份安装／迁移文件已回读验证后替换旧包；其他数学资料校验不变。详见 [介质回执](USB-DELIVERY-RECEIPT.json)。
 
 数学笔记的 Markdown 导入先保护公式再解析，已有表格内原始公式也兼容显示；错题原题、作答、分析、订正和来源原文复用安全数学渲染。编辑仍保留原文，不重新生成题目，不批量改写正式记录。
